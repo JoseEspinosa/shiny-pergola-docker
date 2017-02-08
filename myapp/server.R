@@ -1,0 +1,264 @@
+library(Gviz)
+library(GenomicRanges)
+library (rtracklayer)
+
+col_gr_1 <- "darkblue"
+col_gr_2 <- "brown"
+col_ctrl <- col_gr_1
+col_case <- col_gr_2
+cb_palette <- c("#999999", "#E69F00", "#56B4E9",
+                "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+# "lightblue", "darkblue",
+
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data"
+base_dir <- "/pergola_data"
+
+# data_dir <- dir(file.path(base_dir,"bed4test"))
+# data_dir <- file.path(base_dir,"bed4test")
+# exp_design_f <- "exp_info_test.txt"
+data_dir <- file.path(base_dir, "bed4test_all")
+exp_design_f <- "exp_info.txt"
+
+b2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
+
+# exp_info$sample
+kal_dirs <- perg_bed_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bed", sep="")))
+
+# s2c <- exp_info <- read.table(file.path(base_dir, "exp_info_test.txt"), header = TRUE, stringsAsFactors=FALSE)
+b2v <- dplyr::mutate(b2v, path = perg_bed_files)
+# s2c
+
+kal_dirs <- perg_bedg_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bedGraph", sep="")))
+
+bg2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
+bg2v <- dplyr::mutate(bg2v, path = perg_bedg_files)
+
+unique(exp_info$condition)
+# grps
+g_min_start <- 100000000
+g_max_end <- -100000000
+min_v <- 0
+max_v <- 0
+
+bed2pergViz <- function (df, gr_df, format_f="BED") {
+  grps <- as.character(gr_df[[setdiff(colnames(gr_df), 'sample')]])
+  
+  r <- lapply(unique(grps),
+         function(g) {
+           gr_samps <- grps %in% g
+           gr_files <- df$path[gr_samps]
+           
+           lapply(gr_files, function (bed) {             
+             id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", bed)
+             bed_GR <- import(bed, format = format_f)
+             min_start <- min(start(bed_GR))
+             max_end <- max(end(bed_GR))
+             
+             if (format_f == "BED") {                              
+               tr <- AnnotationTrack(bed_GR, name = paste ("", id, sep=""))#, fill=col_ctrl, background.title = col_ctrl)               
+             }
+             
+             if (format_f == "bedGraph") {
+               min_v <<- floor (min(bed_GR$score))
+               max_v <<- ceiling (max(bed_GR$score))
+#                scores <- as.vector(mcols(bed_GR))
+#                tr <- DataTrack(bed_GR, name = paste ("", id, sep=""))#, fill=col_ctrl, background.title = col_ctrl)               
+               tr <- bed_GR
+             }
+
+             if (g_min_start > min_start) { g_min_start <<- min_start }
+             if (g_max_end < max_end) { g_max_end <<- max_end }
+
+             return (tr) })
+         })
+  
+  names(r) <- unique(grps)
+  return (r)
+}
+
+l_gr_annotation_tr_bed <- bed2pergViz (b2v, exp_info)
+
+list_all <- list()
+
+for (i in 1:length(l_gr_annotation_tr_bed)){
+  list_gr <- lapply (l_gr_annotation_tr_bed[[i]], function (l, color=cb_palette[i]) { 
+    displayPars(l) <- list(fill=color, background.title = color, col=NULL) # coll null for boxes lines
+    return (l)
+  })
+  
+  list_all <- append(list_all, list_gr)  
+}
+
+l_gr_annotation_tr_bg <- bed2pergViz (bg2v, exp_info, "bedGraph") 
+
+
+# setdiff(l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
+# subsetByOverlaps (l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
+list_all_bg <- list()
+group_lab <- c()
+color_by_tr <- c()
+
+for (i in 1:length(l_gr_annotation_tr_bg)){
+  group_lab <- append(group_lab, rep (names(l_gr_annotation_tr_bg)[i], length(l_gr_annotation_tr_bg[[i]])))
+  color_by_tr <- append(color_by_tr, cb_palette[i], length(l_gr_annotation_tr_bg[[i]]))
+  
+  for (j in 1:length(l_gr_annotation_tr_bg[[i]])){
+    GR <- l_gr_annotation_tr_bg[[i]][[j]]
+
+    id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (l_gr_annotation_tr_bg[[i]][j]))
+    d_tr <- DataTrack(GR, name = id, background.title = cb_palette[i],
+                      type="heatmap", ylim = c(0, 0.5),
+                      gradient=c('white','blue'))#, fill=col_ctrl, background.title = col_ctrl) 
+    
+    list_all_bg <- append (list_all_bg, d_tr)
+  }
+  
+}
+
+l_all_common_int <- list() 
+common_intervals <- Reduce(subsetByOverlaps, c(unlist (l_gr_annotation_tr_bg))) 
+
+for (i in 1:length(l_gr_annotation_tr_bg)){  
+  l_gr_common_int <- sapply (l_gr_annotation_tr_bg[[i]], function (l, common_GR=common_intervals) { 
+    mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
+    return (mcol)
+#     return (data.frame(mcol))
+  })
+  
+  l_all_common_int <- cbind(l_all_common_int, l_gr_common_int)  
+}
+
+df <- as.data.frame (unlist(l_all_common_int))
+
+# This was not working problably because number of rows was not correctly set
+# df <- data.frame(matrix(unlist(l_all_common_int), nrow=length(common_intervals), byrow=T))
+names(df) <- paste ("id_", gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg))), sep="")
+
+gr_common_intervals <- GRanges()
+gr_common_intervals <- common_intervals
+mcols(gr_common_intervals) <- df
+
+common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type="a",
+                                    showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
+                                    groups = group_lab, col=color_by_tr,
+                                    legend=FALSE)
+# plotTracks( common_bedg_dt)
+# common_bedg_dt_boxPlot <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type="a",
+#                   showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
+#                   groups = group_lab, col=color_by_tr,
+#                   legend=FALSE)
+
+g_tr <- GenomeAxisTrack()
+
+# Text of the books downloaded from:
+# A Mid Summer Night's Dream:
+#  http://www.gutenberg.org/cache/epub/2242/pg2242.txt
+# The Merchant of Venice:
+#  http://www.gutenberg.org/cache/epub/2243/pg2243.txt
+# Romeo and Juliet:
+#  http://www.gutenberg.org/cache/epub/1112/pg1112.txt
+
+# function(input, output, session) {
+#   # Define a reactive expression for the document term matrix
+#   terms <- reactive({
+#     # Change when the "update" button is pressed...
+#     input$update
+#     # ...but not for anything else
+#     isolate({
+#       withProgress({
+#         setProgress(message = "Processing corpus...")
+#         getTermMatrix(input$selection)
+#       })
+#     })
+#   })
+#   
+#   # Make the wordcloud drawing predictable during a session
+#   wordcloud_rep <- repeatable(wordcloud)
+#   
+#   output$plot <- renderPlot({
+#     v <- terms()
+#     wordcloud_rep(names(v), v, scale=c(4,0.5),
+#                   min.freq = input$freq, max.words=input$max,
+#                   colors=brewer.pal(8, "Dark2"))
+#   })
+# }
+# 
+
+shinyServer(function(input, output) {
+  
+  
+  output$genomicPositionSelect <- renderUI({
+    #     sliderInput( "tpos", "Time Point:", min = 10, max = g_max_end - 10, value = g_min_start + 10 )
+    sliderInput( "tpos", "Time Point:", min = 0, max = g_max_end - 10, value = 0 )
+  })
+  
+  #   pos <-  reactive({
+  #     min( max( input$windowsize + 1, input$tpos ), max(g_max_end) - input$windowsize - 1 )    
+  #   })
+  
+  output$windowsize <- renderUI({                                                             
+    sliderInput("windowsize", "Window size:", min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
+                value =min(g_max_end, 3000), step = min(g_max_end, 300))
+  })
+  
+  output$bedGraphRange <- renderUI({
+    sliderInput("bedGraphRange", "Range bedgraph:", 
+                min = min_v, max = max_v, value = c(0, 0.5), step= 0.1)
+  }) 
+  
+  output$boxplot <- renderUI({                                                             
+    checkboxInput("boxplot", "Add boxplot:", FALSE)
+  })
+  
+  #  boxplot datatrack
+  # it is overlap and then is very difficult to see anything
+  boxplot_dt <- reactive({
+    if(!is.null(input$boxplot) && input$boxplot == TRUE) {
+      common_bedg_dt_boxplot <- common_bedg_dt 
+      displayPars(common_bedg_dt_boxplot) <- list(type=c("boxplot"))
+      
+      #       for (i in 1:length(list_gr)){
+      #         displayPars(list_gr[[i]]) <- list(type=c("boxplot"), fill=cb_palette[i])
+      # #           list(type=c("boxplot"), fill=cb_palette[i])
+      #       }
+      #       
+      #       o_tr_boxplot <-OverlayTrack(list_gr)
+      #       
+      #       IdeogramTrack(genome=input$ucscgen, chromosome=input$chr,
+      #                     showId=TRUE, showBandId=TRUE)
+      #       o_tr_boxplot
+      common_bedg_dt_boxplot
+    }
+  })
+  
+  output$text1 <- renderText({ 
+    paste (as.character (input$boxplot))
+  })
+  
+  output$plotbed <- renderPlot({
+    if(length(input$windowsize)==0){
+      return(NULL)
+    }
+    else{
+      if (input$boxplot==FALSE){
+        pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
+                         #       pt <- plotTracks(c(g_tr, list_all, o_tr),
+                         #                          from=pos(), to=pos() + input$windowsize,
+                         from=input$tpos, to=input$tpos+ input$windowsize,
+                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                         shape = "box", stacking = "dense")        
+      }
+      else {
+        
+        pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
+                         #       pt <- plotTracks(c(g_tr, list_all, o_tr),
+                         #                          from=pos(), to=pos() + input$windowsize,
+                         from=input$tpos, to=input$tpos+ input$windowsize,
+                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                         shape = "box", stacking = "dense")
+      }
+      
+      return(pt)
+    }
+  })
+})
