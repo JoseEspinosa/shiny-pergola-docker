@@ -1,3 +1,12 @@
+############################################################################################
+### Jose A Espinosa. NPMMD/CB-CRG Group. Jan 2017                                        ###
+############################################################################################
+### Shiny app to show pergola data using Gviz                                            ###
+### server.R                                                                             ###
+############################################################################################
+###                                                                                      ###
+############################################################################################
+
 library(Gviz)
 library(GenomicRanges)
 library (rtracklayer)
@@ -7,16 +16,24 @@ col_gr_2 <- "brown"
 col_ctrl <- col_gr_1
 col_case <- col_gr_2
 cb_palette <- c("#999999", "#E69F00", "#56B4E9",
-                "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-# "lightblue", "darkblue",
+                "#009E73", "#F0E442", "#0072B2", 
+                "#D55E00", "#CC79A7")
+
+# Avoid problems if user set many groups
+cb_palette <- rep (cb_palette, 10) 
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
+# base_dir <- "/Users/jespinosa/2017_phecomp_marta"
 base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
+# data_dir <- file.path(base_dir, "GB_indidividual_files")
+# data_dir <- file.path(base_dir, "bed4test_all")
+data_dir <- file.path(base_dir, "files")
+
 # exp_design_f <- "exp_info_test.txt"
-data_dir <- file.path(base_dir, "bed4test_all")
 exp_design_f <- "exp_info.txt"
 
 b2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
@@ -33,7 +50,7 @@ kal_dirs <- perg_bedg_files <- sapply(exp_info$sample, function(id) file.path(da
 bg2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
 bg2v <- dplyr::mutate(bg2v, path = perg_bedg_files)
 
-unique(exp_info$condition)
+# unique(exp_info$condition)
 # grps
 g_min_start <- 100000000
 g_max_end <- -100000000
@@ -97,7 +114,7 @@ l_gr_annotation_tr_bg <- bed2pergViz (bg2v, exp_info, "bedGraph")
 list_all_bg <- list()
 group_lab <- c()
 color_by_tr <- c()
-
+# names(l_gr_annotation_tr_bg)[6]
 for (i in 1:length(l_gr_annotation_tr_bg)){
   group_lab <- append(group_lab, rep (names(l_gr_annotation_tr_bg)[i], length(l_gr_annotation_tr_bg[[i]])))
   color_by_tr <- append(color_by_tr, cb_palette[i], length(l_gr_annotation_tr_bg[[i]]))
@@ -109,7 +126,7 @@ for (i in 1:length(l_gr_annotation_tr_bg)){
     d_tr <- DataTrack(GR, name = id, background.title = cb_palette[i],
                       type="heatmap", ylim = c(0, 0.5),
                       gradient=c('white','blue'))#, fill=col_ctrl, background.title = col_ctrl) 
-    
+
     list_all_bg <- append (list_all_bg, d_tr)
   }
   
@@ -121,68 +138,47 @@ common_intervals <- Reduce(subsetByOverlaps, c(unlist (l_gr_annotation_tr_bg)))
 for (i in 1:length(l_gr_annotation_tr_bg)){  
   l_gr_common_int <- sapply (l_gr_annotation_tr_bg[[i]], function (l, common_GR=common_intervals) { 
     mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
+#     print (length(mcol))
     return (mcol)
 #     return (data.frame(mcol))
   })
   
-  l_all_common_int <- cbind(l_all_common_int, l_gr_common_int)  
+#   l_all_common_int <- cbind(l_all_common_int, l_gr_common_int)  
+  l_all_common_int <- c(l_all_common_int, l_gr_common_int)  
 }
 
 df <- as.data.frame (unlist(l_all_common_int))
 
 # This was not working problably because number of rows was not correctly set
 # df <- data.frame(matrix(unlist(l_all_common_int), nrow=length(common_intervals), byrow=T))
-names(df) <- paste ("id_", gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg))), sep="")
+# names(df) <- paste ("id_", gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg))), sep="")
+id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg)))
+data_type <-  gsub(".+tr_(\\d+)_dt_(\\w+._.+$)", "\\2", names (unlist(l_gr_annotation_tr_bg)))
+names(df) <- paste ("id", id, data_type, sep="_")
 
 gr_common_intervals <- GRanges()
 gr_common_intervals <- common_intervals
 mcols(gr_common_intervals) <- df
 
-common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type="a",
+#####
+## Problem with order of colors, the colors are not set by the provided order by the
+## alphabetical order of the groups label, for instance if we have control and case
+## the case color will be the first on the col assignment 
+group_lab <- factor(group_lab, levels = unique(group_lab))
+
+common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type = "a",
                                     showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-                                    groups = group_lab, col=color_by_tr,
-                                    legend=FALSE)
-# plotTracks( common_bedg_dt)
+                                    groups = group_lab, col = color_by_tr,
+                                    legend = TRUE)
+
+# plotTracks(common_bedg_dt)#comment
+
 # common_bedg_dt_boxPlot <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type="a",
 #                   showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
 #                   groups = group_lab, col=color_by_tr,
 #                   legend=FALSE)
 
 g_tr <- GenomeAxisTrack()
-
-# Text of the books downloaded from:
-# A Mid Summer Night's Dream:
-#  http://www.gutenberg.org/cache/epub/2242/pg2242.txt
-# The Merchant of Venice:
-#  http://www.gutenberg.org/cache/epub/2243/pg2243.txt
-# Romeo and Juliet:
-#  http://www.gutenberg.org/cache/epub/1112/pg1112.txt
-
-# function(input, output, session) {
-#   # Define a reactive expression for the document term matrix
-#   terms <- reactive({
-#     # Change when the "update" button is pressed...
-#     input$update
-#     # ...but not for anything else
-#     isolate({
-#       withProgress({
-#         setProgress(message = "Processing corpus...")
-#         getTermMatrix(input$selection)
-#       })
-#     })
-#   })
-#   
-#   # Make the wordcloud drawing predictable during a session
-#   wordcloud_rep <- repeatable(wordcloud)
-#   
-#   output$plot <- renderPlot({
-#     v <- terms()
-#     wordcloud_rep(names(v), v, scale=c(4,0.5),
-#                   min.freq = input$freq, max.words=input$max,
-#                   colors=brewer.pal(8, "Dark2"))
-#   })
-# }
-# 
 
 shinyServer(function(input, output) {
   
