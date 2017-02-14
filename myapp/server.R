@@ -11,6 +11,9 @@ library(Gviz)
 library(GenomicRanges)
 library (rtracklayer)
 
+col_back_title="brown"
+tr_sum_size=20
+
 col_gr_1 <- "darkblue"
 col_gr_2 <- "brown"
 col_ctrl <- col_gr_1
@@ -169,6 +172,7 @@ group_lab <- factor(group_lab, levels = unique(group_lab))
 common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type = "a",
                                     showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
                                     groups = group_lab, col = color_by_tr,
+                                    background.title = col_back_title, size = tr_sum_size,
                                     legend = TRUE)
 
 # plotTracks(common_bedg_dt)#comment
