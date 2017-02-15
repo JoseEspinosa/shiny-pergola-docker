@@ -65,10 +65,10 @@ shinyUI(
 #                        uiOutput("windowsize"), # server.R
                        uiOutput("bedGraphRange"),
                        uiOutput("dataInterval"),
-                       uiOutput("idSelect"),
-                       uiOutput("groups_plot"),
+                       uiOutput("idSelect"),                       
 #                        uiOutput("genomicPositionSelect"),
-                       uiOutput("groupSelect"),
+                       uiOutput("groups"),
+                       uiOutput("groups_plot"),
                        uiOutput("boxplot")
       ),
             conditionalPanel(condition="input.tabs_p=='About'",

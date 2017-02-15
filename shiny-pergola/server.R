@@ -7,6 +7,8 @@
 ### TODO                                                                                 ###
 ### Benchmark using system.time, benchmark library                                       ###
 ### Try to load plots at the beginning less time                                         ### 
+### Generate bedgraph files like bed files and and object with all the bedGraph files    ###
+### like know for the group plot                                                         ###
 ############################################################################################
 
 library(Gviz)
@@ -45,13 +47,13 @@ exp_design_f <- "exp_info.txt"
 b2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
 
 # exp_info$sample
-kal_dirs <- perg_bed_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bed", sep="")))
+perg_bed_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bed", sep="")))
 
 # s2c <- exp_info <- read.table(file.path(base_dir, "exp_info_test.txt"), header = TRUE, stringsAsFactors=FALSE)
 b2v <- dplyr::mutate(b2v, path = perg_bed_files)
 # s2c
 
-kal_dirs <- perg_bedg_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bedGraph", sep="")))
+perg_bedg_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bedGraph", sep="")))
 
 bg2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
 bg2v <- dplyr::mutate(bg2v, path = perg_bedg_files)
@@ -62,6 +64,10 @@ g_min_start <- 100000000
 g_max_end <- -100000000
 min_v <- 0
 max_v <- 0
+
+l_gr_color <- mapply(function(x, col) list(col),
+       unique(b2v$condition), cb_palette[1:length(unique(b2v$condition))])
+# l_gr_color[["control"]]
 
 bed2pergViz <- function (df, gr_df, format_f="BED") {
   grps <- as.character(gr_df[[setdiff(colnames(gr_df), 'sample')]])
@@ -78,7 +84,9 @@ bed2pergViz <- function (df, gr_df, format_f="BED") {
              max_end <- max(end(bed_GR))
              
              if (format_f == "BED") {                              
-               tr <- AnnotationTrack(bed_GR, name = paste ("", id, sep=""))#, fill=col_ctrl, background.title = col_ctrl)               
+               tr <- AnnotationTrack(bed_GR, name = paste ("", id, sep=""),
+                                     fill=l_gr_color[[g]], 
+                                     background.title = l_gr_color[[g]], col=NULL)#, fill=col_ctrl, background.title = col_ctrl)               
              }
              
              if (format_f == "bedGraph") {
@@ -101,20 +109,28 @@ bed2pergViz <- function (df, gr_df, format_f="BED") {
 
 l_gr_annotation_tr_bed <- bed2pergViz (b2v, exp_info)
 
+# culo<- unlist(l_gr_annotation_tr_bed[c("case", "control")])
+# plotTracks(culo, stacking = "dense")
+
 ### aqui
 # Way of removing bed files
-l_gr_annotation_tr_bed [["case"]]
+# crear un plot para cada grupo ya renderizado de manera que solo tenga que elegir si se 
+# ensenya o no 
+# input$groupSelect
+# l_gr_annotation_tr_bed [["case"]]
 
 list_all <- list()
+# list_all
+# l_gr_annotation_tr_bed[c("case", "control")]
 
-for (i in 1:length(l_gr_annotation_tr_bed)){
-  list_gr <- lapply (l_gr_annotation_tr_bed[[i]], function (l, color=cb_palette[i]) { 
-    displayPars(l) <- list(fill=color, background.title = color, col=NULL) # coll null for boxes lines
-    return (l)
-  })
-  
-  list_all <- append(list_all, list_gr)  
-}
+# for (i in 1:length(l_gr_annotation_tr_bed)){
+#   list_gr <- lapply (l_gr_annotation_tr_bed[[i]], function (l, color=cb_palette[i]) { 
+#     displayPars(l) <- list(fill=color, background.title = color, col=NULL) # coll null for boxes lines
+#     return (l)
+#   })
+#   
+#   list_all <- append(list_all, list_gr)  
+# }
 
 l_gr_annotation_tr_bg <- bed2pergViz (bg2v, exp_info, "bedGraph") 
 
@@ -125,6 +141,7 @@ list_all_bg <- list()
 group_lab <- c()
 color_by_tr <- c()
 # names(l_gr_annotation_tr_bg)[6]
+
 for (i in 1:length(l_gr_annotation_tr_bg)){
   group_lab <- append(group_lab, rep (names(l_gr_annotation_tr_bg)[i], length(l_gr_annotation_tr_bg[[i]])))
   color_by_tr <- append(color_by_tr, cb_palette[i], length(l_gr_annotation_tr_bg[[i]]))
@@ -145,6 +162,15 @@ for (i in 1:length(l_gr_annotation_tr_bg)){
 l_all_common_int <- list() 
 common_intervals <- Reduce(subsetByOverlaps, c(unlist (l_gr_annotation_tr_bg))) 
 
+# system.time(
+sapply(unlist(l_gr_annotation_tr_bg), function (l, common_GR=common_intervals) { 
+  mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
+  #     print (length(mcol))
+  return (mcol)
+  #     return (data.frame(mcol))
+})
+# )
+# system.time(
 for (i in 1:length(l_gr_annotation_tr_bg)){  
   l_gr_common_int <- sapply (l_gr_annotation_tr_bg[[i]], function (l, common_GR=common_intervals) { 
     mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
@@ -156,6 +182,7 @@ for (i in 1:length(l_gr_annotation_tr_bg)){
 #   l_all_common_int <- cbind(l_all_common_int, l_gr_common_int)  
   l_all_common_int <- c(l_all_common_int, l_gr_common_int)  
 }
+# )
 
 df <- as.data.frame (unlist(l_all_common_int))
 
@@ -214,8 +241,8 @@ shinyServer(function(input, output) {
     sliderInput("bedGraphRange", "Range bedgraph:", 
                 min = min_v, max = max_v, value = c(0, 0.5), step= 0.1)
   })
-  output$groupSelect <- renderUI({
-    checkboxGroupInput( "Groups", "groups", choices = unique(group_lab))
+  output$groups <- renderUI({
+    checkboxGroupInput( "groups", "Groups to render", choices = unique(group_lab), selected=unique(group_lab))
   })
   output$groups_plot <- renderUI({                                                             
     checkboxInput("groups_plot", "Add group plot", FALSE)
@@ -251,7 +278,8 @@ shinyServer(function(input, output) {
   })
   
   output$text1 <- renderText({ 
-    paste (as.character (input$boxplot))
+#     paste (as.character (input$boxplot))
+    paste (as.character (input$groups)) 
   })
   
   output$plotbed <- renderPlot({
@@ -262,7 +290,9 @@ shinyServer(function(input, output) {
     else{
       if (input$boxplot==FALSE){
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
-        pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt()), 
+#         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt()), 
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), list_all_bg, groups_dt()),
+#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[c("case", "control")]), list_all_bg, groups_dt()),
                          #       pt <- plotTracks(c(g_tr, list_all, o_tr),
                          #                          from=pos(), to=pos() + input$windowsize,
 #                          from=input$tpos, to=input$tpos+ input$windowsize,
@@ -273,7 +303,8 @@ shinyServer(function(input, output) {
       else {
         
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
-        pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt(), boxplot_dt()),                                           
+#         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt(), boxplot_dt()),
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), list_all_bg, groups_dt(), boxplot_dt()),
                          #       pt <- plotTracks(c(g_tr, list_all, o_tr),
                          #                          from=pos(), to=pos() + input$windowsize,
 #                          from=input$tpos, to=input$tpos+ input$windowsize,
