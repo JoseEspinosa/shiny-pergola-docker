@@ -66,7 +66,9 @@ shinyUI(
                        uiOutput("bedGraphRange"),
                        uiOutput("dataInterval"),
                        uiOutput("idSelect"),
+                       uiOutput("groups_plot"),
 #                        uiOutput("genomicPositionSelect"),
+                       uiOutput("groupSelect"),
                        uiOutput("boxplot")
       ),
             conditionalPanel(condition="input.tabs_p=='About'",

@@ -4,7 +4,9 @@
 ### Shiny app to show pergola data using Gviz                                            ###
 ### server.R                                                                             ###
 ############################################################################################
-###                                                                                      ###
+### TODO                                                                                 ###
+### Benchmark using system.time, benchmark library                                       ###
+### Try to load plots at the beginning less time                                         ### 
 ############################################################################################
 
 library(Gviz)
@@ -28,8 +30,8 @@ cb_palette <- rep (cb_palette, 10)
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/2017_phecomp_marta"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/pergola_data"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+# base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
@@ -98,6 +100,10 @@ bed2pergViz <- function (df, gr_df, format_f="BED") {
 }
 
 l_gr_annotation_tr_bed <- bed2pergViz (b2v, exp_info)
+
+### aqui
+# Way of removing bed files
+l_gr_annotation_tr_bed [["case"]]
 
 list_all <- list()
 
@@ -186,8 +192,6 @@ common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type
 g_tr <- GenomeAxisTrack()
 
 shinyServer(function(input, output) {
-  
-  
 #   output$genomicPositionSelect <- renderUI({
     #     sliderInput( "tpos", "Time Point:", min = 10, max = g_max_end - 10, value = g_min_start + 10 )
 #     sliderInput( "tpos", "Time Point:", min = 0, max = g_max_end - 10, value = 0 )
@@ -209,12 +213,22 @@ shinyServer(function(input, output) {
   output$bedGraphRange <- renderUI({
     sliderInput("bedGraphRange", "Range bedgraph:", 
                 min = min_v, max = max_v, value = c(0, 0.5), step= 0.1)
-  }) 
-  
+  })
+  output$groupSelect <- renderUI({
+    checkboxGroupInput( "Groups", "groups", choices = unique(group_lab))
+  })
+  output$groups_plot <- renderUI({                                                             
+    checkboxInput("groups_plot", "Add group plot", FALSE)
+  })
   output$boxplot <- renderUI({                                                             
     checkboxInput("boxplot", "Add boxplot:", FALSE)
-  })
+  })  
   
+  groups_dt <- reactive({
+    if(!is.null(input$groups_plot) && input$groups_plot == TRUE) {
+      common_bedg_dt
+    }
+  })
   #  boxplot datatrack
   # it is overlap and then is very difficult to see anything
   boxplot_dt <- reactive({
@@ -247,7 +261,8 @@ shinyServer(function(input, output) {
     }
     else{
       if (input$boxplot==FALSE){
-        pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
+#         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
+        pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt()), 
                          #       pt <- plotTracks(c(g_tr, list_all, o_tr),
                          #                          from=pos(), to=pos() + input$windowsize,
 #                          from=input$tpos, to=input$tpos+ input$windowsize,
@@ -257,7 +272,8 @@ shinyServer(function(input, output) {
       }
       else {
         
-        pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
+#         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
+        pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt(), boxplot_dt()),                                           
                          #       pt <- plotTracks(c(g_tr, list_all, o_tr),
                          #                          from=pos(), to=pos() + input$windowsize,
 #                          from=input$tpos, to=input$tpos+ input$windowsize,
