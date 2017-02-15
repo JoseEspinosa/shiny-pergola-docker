@@ -28,6 +28,7 @@ cb_palette <- rep (cb_palette, 10)
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/2017_phecomp_marta"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
@@ -187,20 +188,24 @@ g_tr <- GenomeAxisTrack()
 shinyServer(function(input, output) {
   
   
-  output$genomicPositionSelect <- renderUI({
+#   output$genomicPositionSelect <- renderUI({
     #     sliderInput( "tpos", "Time Point:", min = 10, max = g_max_end - 10, value = g_min_start + 10 )
-    sliderInput( "tpos", "Time Point:", min = 0, max = g_max_end - 10, value = 0 )
-  })
+#     sliderInput( "tpos", "Time Point:", min = 0, max = g_max_end - 10, value = 0 )
+#   })
   
   #   pos <-  reactive({
   #     min( max( input$windowsize + 1, input$tpos ), max(g_max_end) - input$windowsize - 1 )    
   #   })
   
-  output$windowsize <- renderUI({                                                             
-    sliderInput("windowsize", "Window size:", min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
-                value =min(g_max_end, 3000), step = min(g_max_end, 300))
-  })
-  
+#   output$windowsize <- renderUI({                                                             
+#     sliderInput("windowsize", "Window size:", min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
+#                 value =min(g_max_end, 3000), step = min(g_max_end, 300))
+#   })
+  output$dataInterval <- renderUI({
+    sliderInput("dataInterval", "Data interval:", 
+                min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
+                value = c(min(g_min_start, 1000), g_min_start+5000), step= 1000)
+  }) 
   output$bedGraphRange <- renderUI({
     sliderInput("bedGraphRange", "Range bedgraph:", 
                 min = min_v, max = max_v, value = c(0, 0.5), step= 0.1)
@@ -236,7 +241,8 @@ shinyServer(function(input, output) {
   })
   
   output$plotbed <- renderPlot({
-    if(length(input$windowsize)==0){
+#     if(length(input$windowsize)==0){
+    if(length(input$bedGraphRange)==0){
       return(NULL)
     }
     else{
@@ -244,8 +250,9 @@ shinyServer(function(input, output) {
         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
                          #       pt <- plotTracks(c(g_tr, list_all, o_tr),
                          #                          from=pos(), to=pos() + input$windowsize,
-                         from=input$tpos, to=input$tpos+ input$windowsize,
-                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
+#                          from=input$tpos, to=input$tpos+ input$windowsize,
+                         from=input$dataInterval[1], to=input$dataInterval[2], 
+                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                          shape = "box", stacking = "dense")        
       }
       else {
@@ -253,7 +260,8 @@ shinyServer(function(input, output) {
         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
                          #       pt <- plotTracks(c(g_tr, list_all, o_tr),
                          #                          from=pos(), to=pos() + input$windowsize,
-                         from=input$tpos, to=input$tpos+ input$windowsize,
+#                          from=input$tpos, to=input$tpos+ input$windowsize,
+                         from=input$dataInterval[1], to=input$dataInterval[2],
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
                          shape = "box", stacking = "dense")
       }

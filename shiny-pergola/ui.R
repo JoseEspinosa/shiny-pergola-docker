@@ -62,10 +62,11 @@ shinyUI(
     sidebarPanel(
       # Load info such as experimental info
       conditionalPanel(condition="input.tabs_p=='Browser'",
-                       uiOutput("windowsize"), # server.R
+#                        uiOutput("windowsize"), # server.R
                        uiOutput("bedGraphRange"),
+                       uiOutput("dataInterval"),
                        uiOutput("idSelect"),
-                       uiOutput("genomicPositionSelect"),
+#                        uiOutput("genomicPositionSelect"),
                        uiOutput("boxplot")
       ),
             conditionalPanel(condition="input.tabs_p=='About'",
