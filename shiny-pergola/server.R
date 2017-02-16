@@ -32,8 +32,8 @@ cb_palette <- rep (cb_palette, 10)
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/2017_phecomp_marta"
-base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-# base_dir <- "/pergola_data"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
@@ -109,17 +109,7 @@ bed2pergViz <- function (df, gr_df, format_f="BED") {
 
 l_gr_annotation_tr_bed <- bed2pergViz (b2v, exp_info)
 
-# culo<- unlist(l_gr_annotation_tr_bed[c("case", "control")])
-# plotTracks(culo, stacking = "dense")
-
-### aqui
-# Way of removing bed files
-# crear un plot para cada grupo ya renderizado de manera que solo tenga que elegir si se 
-# ensenya o no 
-# input$groupSelect
-# l_gr_annotation_tr_bed [["case"]]
-
-list_all <- list()
+# list_all <- list()
 # list_all
 # l_gr_annotation_tr_bed[c("case", "control")]
 
@@ -132,57 +122,71 @@ list_all <- list()
 #   list_all <- append(list_all, list_gr)  
 # }
 
-l_gr_annotation_tr_bg <- bed2pergViz (bg2v, exp_info, "bedGraph") 
+l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph") 
 
+l_gr_data_tr_bg_tmp <- lapply (seq_along(l_granges_bg), function (i_group_exp) {
+        lapply (l_granges_bg[[i_group_exp]],  function (granges_obj) {
+                                                     d_track <- DataTrack(granges_obj,
+                                                                type="heatmap", ylim = c(0, 0.5),
+                                                                background.title = l_gr_color[[i_group_exp]],
+                                                                gradient=c('white','blue'))
+                                                     return (d_track)
+                                                    })
+     })
 
+names (l_gr_data_tr_bg_tmp) <- names(l_granges_bg)
+l_gr_data_tr_bg <-l_gr_data_tr_bg_tmp
+l_gr_annotation_tr_bg <- l_gr_data_tr_bg
+list_all_bg <- l_gr_data_tr_bg
+
+  
 # setdiff(l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
 # subsetByOverlaps (l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
-list_all_bg <- list()
-group_lab <- c()
-color_by_tr <- c()
-# names(l_gr_annotation_tr_bg)[6]
-
-for (i in 1:length(l_gr_annotation_tr_bg)){
-  group_lab <- append(group_lab, rep (names(l_gr_annotation_tr_bg)[i], length(l_gr_annotation_tr_bg[[i]])))
-  color_by_tr <- append(color_by_tr, cb_palette[i], length(l_gr_annotation_tr_bg[[i]]))
-  
-  for (j in 1:length(l_gr_annotation_tr_bg[[i]])){
-    GR <- l_gr_annotation_tr_bg[[i]][[j]]
-
-    id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (l_gr_annotation_tr_bg[[i]][j]))
-    d_tr <- DataTrack(GR, name = id, background.title = cb_palette[i],
-                      type="heatmap", ylim = c(0, 0.5),
-                      gradient=c('white','blue'))#, fill=col_ctrl, background.title = col_ctrl) 
-
-    list_all_bg <- append (list_all_bg, d_tr)
-  }
-  
-}
+# list_all_bg <- list()
+# group_lab <- c()
+# color_by_tr <- c()
+# for (i in 1:length(l_gr_annotation_tr_bg)){
+#   group_lab <- append(group_lab, rep (names(l_gr_annotation_tr_bg)[i], length(l_gr_annotation_tr_bg[[i]])))
+#   color_by_tr <- append(color_by_tr, cb_palette[i], length(l_gr_annotation_tr_bg[[i]]))
+#   
+#   for (j in 1:length(l_gr_annotation_tr_bg[[i]])){
+#     GR <- l_gr_annotation_tr_bg[[i]][[j]]
+# 
+#     id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (l_gr_annotation_tr_bg[[i]][j]))
+#     d_tr <- DataTrack(GR, name = id, background.title = cb_palette[i],
+#                       type="heatmap", ylim = c(0, 0.5),
+#                       gradient=c('white','blue'))#, fill=col_ctrl, background.title = col_ctrl) 
+# 
+#     list_all_bg <- append (list_all_bg, d_tr)
+#   }
+#   
+# }
 
 l_all_common_int <- list() 
-common_intervals <- Reduce(subsetByOverlaps, c(unlist (l_gr_annotation_tr_bg))) 
+common_intervals <- Reduce(subsetByOverlaps, c(unlist (l_granges_bg))) 
 
-# system.time(
-sapply(unlist(l_gr_annotation_tr_bg), function (l, common_GR=common_intervals) { 
-  mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
-  #     print (length(mcol))
-  return (mcol)
-  #     return (data.frame(mcol))
+l_gr_annotation_tr_bg <- l_granges_bg
+
+group_lab <- unlist(lapply (seq_along(l_granges_bg), function (i_group_exp) {
+                                  rep (names(l_granges_bg[i_group_exp]), length(l_granges_bg[[i_group_exp]])) 
+             }))
+
+# for (i in 1:length(l_gr_annotation_tr_bg)){  
+#   l_gr_common_int <- sapply (l_gr_annotation_tr_bg[[i]], function (l, common_GR=common_intervals) { 
+#     mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
+#     return (mcol)
+# #     return (data.frame(mcol))
+#   })  
+# #   l_all_common_int <- cbind(l_all_common_int, l_gr_common_int)  
+#   l_all_common_int <- c(l_all_common_int, l_gr_common_int)  
+# }
+
+l_all_common_int <- sapply(unlist(l_gr_annotation_tr_bg), 
+                           function (l, common_GR=common_intervals) { 
+                            mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
+                            return (mcol)
+#                             return (data.frame(mcol))
 })
-# )
-# system.time(
-for (i in 1:length(l_gr_annotation_tr_bg)){  
-  l_gr_common_int <- sapply (l_gr_annotation_tr_bg[[i]], function (l, common_GR=common_intervals) { 
-    mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
-#     print (length(mcol))
-    return (mcol)
-#     return (data.frame(mcol))
-  })
-  
-#   l_all_common_int <- cbind(l_all_common_int, l_gr_common_int)  
-  l_all_common_int <- c(l_all_common_int, l_gr_common_int)  
-}
-# )
 
 df <- as.data.frame (unlist(l_all_common_int))
 
@@ -197,18 +201,21 @@ gr_common_intervals <- GRanges()
 gr_common_intervals <- common_intervals
 mcols(gr_common_intervals) <- df
 
+# gr_common_intervals[, which(group_lab=="control")]
+
+
 #####
 ## Problem with order of colors, the colors are not set by the provided order by the
 ## alphabetical order of the groups label, for instance if we have control and case
 ## the case color will be the first on the col assignment 
 group_lab <- factor(group_lab, levels = unique(group_lab))
+color_by_tr <- unlist(l_gr_color[unique(group_lab)])
 
-common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type = "a",
-                                    showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-                                    groups = group_lab, col = color_by_tr,
-                                    background.title = col_back_title, size = tr_sum_size,
-                                    legend = TRUE)
-
+# common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type = "a",
+#                                     showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
+#                                     groups = group_lab, col = color_by_tr,
+#                                     background.title = col_back_title, size = tr_sum_size,
+#                                     legend = TRUE)
 # plotTracks(common_bedg_dt)#comment
 
 # common_bedg_dt_boxPlot <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type="a",
@@ -253,14 +260,23 @@ shinyServer(function(input, output) {
   
   groups_dt <- reactive({
     if(!is.null(input$groups_plot) && input$groups_plot == TRUE) {
+      
+      gr_common_intervals_subset <- gr_common_intervals [ , which(group_lab==input$groups)]
+      
+      common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = "mean intake (mg)", type = "a",
+                showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
+                groups = group_lab[which(group_lab==input$groups)], col = color_by_tr,
+                background.title = col_back_title, size = tr_sum_size,
+                legend = TRUE)
       common_bedg_dt
     }
   })
+  
   #  boxplot datatrack
   # it is overlap and then is very difficult to see anything
   boxplot_dt <- reactive({
     if(!is.null(input$boxplot) && input$boxplot == TRUE) {
-      common_bedg_dt_boxplot <- common_bedg_dt 
+      common_bedg_dt_boxplot <- groups_dt()
       displayPars(common_bedg_dt_boxplot) <- list(type=c("boxplot"))
       
       #       for (i in 1:length(list_gr)){
@@ -277,10 +293,10 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$text1 <- renderText({ 
-#     paste (as.character (input$boxplot))
-    paste (as.character (input$groups)) 
-  })
+#   output$text1 <- renderText({ 
+# #     paste (as.character (input$boxplot))
+#     paste (as.character (input$groups)) 
+#   })
   
   output$plotbed <- renderPlot({
 #     if(length(input$windowsize)==0){
@@ -291,10 +307,11 @@ shinyServer(function(input, output) {
       if (input$boxplot==FALSE){
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt()), 
-        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), list_all_bg, groups_dt()),
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
+                           unlist(list_all_bg[input$groups]), groups_dt()),
 #         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[c("case", "control")]), list_all_bg, groups_dt()),
-                         #       pt <- plotTracks(c(g_tr, list_all, o_tr),
-                         #                          from=pos(), to=pos() + input$windowsize,
+#         pt <- plotTracks(c(g_tr, list_all, o_tr),
+#                          from=pos(), to=pos() + input$windowsize,
 #                          from=input$tpos, to=input$tpos+ input$windowsize,
                          from=input$dataInterval[1], to=input$dataInterval[2], 
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
@@ -304,9 +321,9 @@ shinyServer(function(input, output) {
         
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt(), boxplot_dt()),
-        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), list_all_bg, groups_dt(), boxplot_dt()),
-                         #       pt <- plotTracks(c(g_tr, list_all, o_tr),
-                         #                          from=pos(), to=pos() + input$windowsize,
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),
+#       pt <- plotTracks(c(g_tr, list_all, o_tr),
+#                          from=pos(), to=pos() + input$windowsize,
 #                          from=input$tpos, to=input$tpos+ input$windowsize,
                          from=input$dataInterval[1], to=input$dataInterval[2],
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
