@@ -82,11 +82,14 @@ shinyUI(
     mainPanel(
       tabsetPanel(
         tabPanel("Browser",
-                 fluidRow(column(12,
-                                 plotOutput("plotbed", height=600),
-                                 plotOutput("envInfo", height=20))#,
+                 fluidRow(                  
+                  column(12,
+                           plotOutput("plotbed", height=600),
+                           plotOutput("envInfo", height=20))#,
 #                           textOutput("text1")
-                 )),        
+                        ),
+                  column(3, downloadButton("all_plot_tiff", "Download snapshot"))
+                ),        
         #         tabPanel("Plots",
         #                  
         #                  fluidRow(

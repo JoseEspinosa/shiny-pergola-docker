@@ -14,6 +14,7 @@
 library(Gviz)
 library(GenomicRanges)
 library (rtracklayer)
+library(ggplot2)
 
 col_back_title="brown"
 tr_sum_size=20
@@ -32,8 +33,8 @@ cb_palette <- rep (cb_palette, 10)
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/2017_phecomp_marta"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/pergola_data"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+# base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
@@ -170,6 +171,12 @@ l_gr_annotation_tr_bg <- l_granges_bg
 group_lab <- unlist(lapply (seq_along(l_granges_bg), function (i_group_exp) {
                                   rep (names(l_granges_bg[i_group_exp]), length(l_granges_bg[[i_group_exp]])) 
              }))
+#####
+## Problem with order of colors, the colors are not set by the provided order by the
+## alphabetical order of the groups label, for instance if we have control and case
+## the case color will be the first on the col assignment 
+group_lab <- factor(group_lab, levels = unique(group_lab))
+color_by_tr <- unlist(l_gr_color[unique(group_lab)])
 
 # for (i in 1:length(l_gr_annotation_tr_bg)){  
 #   l_gr_common_int <- sapply (l_gr_annotation_tr_bg[[i]], function (l, common_GR=common_intervals) { 
@@ -202,14 +209,6 @@ gr_common_intervals <- common_intervals
 mcols(gr_common_intervals) <- df
 
 # gr_common_intervals[, which(group_lab=="control")]
-
-
-#####
-## Problem with order of colors, the colors are not set by the provided order by the
-## alphabetical order of the groups label, for instance if we have control and case
-## the case color will be the first on the col assignment 
-group_lab <- factor(group_lab, levels = unique(group_lab))
-color_by_tr <- unlist(l_gr_color[unique(group_lab)])
 
 # common_bedg_dt <- DataTrack(gr_common_intervals, name = "mean intake (mg)", type = "a",
 #                                     showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
@@ -298,7 +297,7 @@ shinyServer(function(input, output) {
 #     paste (as.character (input$groups)) 
 #   })
   
-  output$plotbed <- renderPlot({
+  all_plot <- reactive({
 #     if(length(input$windowsize)==0){
     if(length(input$bedGraphRange)==0){
       return(NULL)
@@ -330,7 +329,82 @@ shinyServer(function(input, output) {
                          shape = "box", stacking = "dense")
       }
       
-      return(pt)
+#       return(pt)
+      pt
     }
+  })
+  
+  # Is the only way I find to save the plot, because once it is instanciated one time (all_plot)
+  # then can not be call a second time in the downloading expression
+#   dupl_plot <- reactive({
+    #     if(length(input$windowsize)==0){
+#     if(length(input$bedGraphRange)==0){
+#       return(NULL)
+#     }
+#     else{
+#       if (input$boxplot==FALSE){        
+#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
+#                            unlist(list_all_bg[input$groups]), groups_dt()),                      
+#                          from=input$dataInterval[1], to=input$dataInterval[2], 
+#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+#                          shape = "box", stacking = "dense")        
+#       }
+#       else {
+#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),                         
+#                          from=input$dataInterval[1], to=input$dataInterval[2],
+#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
+#                          shape = "box", stacking = "dense")
+#       }
+# 
+#       pt
+#     }
+#   })
+
+  output$plotbed <- renderPlot({
+    all_plot()
+#     plot (1:5, 2:6)
+#     print(all_plot()) 
+  })
+
+  
+  
+  # Download n_events plot
+#   output$all_plot_tiff <- downloadHandler(
+#     filename <- function() { paste('tracks_plot','tiff', sep="") },
+#     content <- function(file) {
+#       device <- function(width, height) grDevices::tiff(width = 10, height = 5)
+#       tiff(file)
+#       dupl_plot()
+#       dev.off()
+# #       ggsave (file, plot = all_plot(), width = 15, height = 10)
+#       
+#     },
+#     contentType = 'application/png'
+
+output$all_plot_tiff <- downloadHandler(
+  filename <-  'tracks_plot.tiff' ,
+  content <- function(file) {
+    tiff(file)
+    if(length(input$bedGraphRange)==0){
+      return(NULL)
+    }
+    else{
+      if (input$boxplot==FALSE){        
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
+                           unlist(list_all_bg[input$groups]), groups_dt()),                      
+                         from=input$dataInterval[1], to=input$dataInterval[2], 
+                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+                         shape = "box", stacking = "dense")        
+      }
+      else {
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),                         
+                         from=input$dataInterval[1], to=input$dataInterval[2],
+                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                         shape = "box", stacking = "dense")
+      }
+      
+      pt
+    }
+    dev.off()
   })
 })
