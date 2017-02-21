@@ -25,15 +25,16 @@ col_ctrl <- col_gr_1
 col_case <- col_gr_2
 cb_palette <- c("#999999", "#E69F00", "#56B4E9",
                 "#009E73", "#F0E442", "#0072B2", 
-                "#D55E00", "#CC79A7")
+                "#D55E00", "#CC79A7", "#000000", 
+                "#00009B")
 
 # Avoid problems if user set many groups
 cb_palette <- rep (cb_palette, 10) 
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-# base_dir <- "/Users/jespinosa/2017_phecomp_marta"
-base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 # base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
@@ -47,7 +48,10 @@ exp_design_f <- "exp_info.txt"
 
 b2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
 
-# exp_info$sample
+{ if (length(exp_info$sample) != length(unique(exp_info$sample))) {
+  stop ("Sample names duplicated in configuration file")}
+}
+
 perg_bed_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bed", sep="")))
 
 # s2c <- exp_info <- read.table(file.path(base_dir, "exp_info_test.txt"), header = TRUE, stringsAsFactors=FALSE)
@@ -260,11 +264,13 @@ shinyServer(function(input, output) {
   groups_dt <- reactive({
     if(!is.null(input$groups_plot) && input$groups_plot == TRUE) {
       
-      gr_common_intervals_subset <- gr_common_intervals [ , which(group_lab==input$groups)]
+#       gr_common_intervals_subset <- gr_common_intervals [ , which(group_lab==input$groups)]
+      gr_common_intervals_subset <- gr_common_intervals [ , group_lab %in% input$groups] 
       
       common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = "mean intake (mg)", type = "a",
                 showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-                groups = group_lab[which(group_lab==input$groups)], col = color_by_tr,
+#                 groups = group_lab[which(group_lab==input$groups)], col = color_by_tr,
+                groups = group_lab[group_lab %in% input$groups], col = color_by_tr,
                 background.title = col_back_title, size = tr_sum_size,
                 legend = TRUE)
       common_bedg_dt
