@@ -84,7 +84,7 @@ shinyUI(
         tabPanel("Browser",
                  fluidRow(                  
                   column(12,
-                           plotOutput("plotbed", height=700),
+                           plotOutput("plotbed", height=1000),
                            plotOutput("envInfo", height=20))#,
 #                           textOutput("text1")
                         ),

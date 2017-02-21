@@ -17,7 +17,7 @@ library (rtracklayer)
 library(ggplot2)
 
 col_back_title="brown"
-tr_sum_size=20
+tr_sum_size=40
 lab_group_plot <- "mean intake (g)"
 
 col_gr_1 <- "darkblue"
