@@ -26,6 +26,8 @@ g_legend<-function(a.gplot){
 col_back_title="brown"
 tr_sum_size=40
 lab_group_plot <- "mean intake (g)"
+color_min <- 'white'
+color_max <- 'blue'
 
 col_gr_1 <- "darkblue"
 col_gr_2 <- "brown"
@@ -44,8 +46,8 @@ leg_bool <- FALSE
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
-base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 # base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc/files" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
@@ -142,12 +144,18 @@ l_gr_annotation_tr_bed <- bed2pergViz (b2v, exp_info)
 
 l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph") 
 
+names(l_granges_bg[[2]][1])
+
 l_gr_data_tr_bg_tmp <- lapply (seq_along(l_granges_bg), function (i_group_exp) {
-        lapply (l_granges_bg[[i_group_exp]],  function (granges_obj) {
+        lapply (seq_along (l_granges_bg[[i_group_exp]]),  function (i_track) {                                                     
+                                                     granges_obj <-l_granges_bg[[i_group_exp]][[i_track]]
+                                                     tr_name <- names(l_granges_bg[[i_group_exp]][i_track])                                                     
+                                                     id <- gsub("^tr_(\\d+)(_dt.*$)", "\\1", tr_name)                                                     
                                                      d_track <- DataTrack(granges_obj,
                                                                 type="heatmap", ylim = c(0, 0.5),
                                                                 background.title = l_gr_color[[i_group_exp]],
-                                                                gradient=c('white','blue'))
+                                                                gradient=c(color_min,color_max), 
+                                                                showAxis = F, name = id)
                                                      return (d_track)
                                                     })
      })
@@ -172,7 +180,7 @@ list_all_bg <- l_gr_data_tr_bg
 #     id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (l_gr_annotation_tr_bg[[i]][j]))
 #     d_tr <- DataTrack(GR, name = id, background.title = cb_palette[i],
 #                       type="heatmap", ylim = c(0, 0.5),
-#                       gradient=c('white','blue'))#, fill=col_ctrl, background.title = col_ctrl) 
+#                       gradient=c('color_min','color_max'))#, fill=col_ctrl, background.title = col_ctrl) 
 # 
 #     list_all_bg <- append (list_all_bg, d_tr)
 #   }
@@ -212,6 +220,8 @@ l_all_common_int <- sapply(unlist(l_gr_annotation_tr_bg),
 })
 
 df_common_int <- as.data.frame (unlist(l_all_common_int))
+data(twoGroups)
+dTrack <- DataTrack(twoGroups, name = "uniform")
 
 # This was not working problably because number of rows was not correctly set
 # df_common_int <- data.frame(matrix(unlist(l_all_common_int), nrow=length(common_intervals), byrow=T))
@@ -232,7 +242,7 @@ mcols(gr_common_intervals) <- df_common_int
 #                                     legend = TRUE)
 ### Way to use the same data track to plot the heatmap. 
 ## order of tracks is reversed.
-# displayPars(common_bedg_dt) <- list(type=c("heatmap"), col= 'blue',gradient=c('white','blue'), ylim = c(0, 0.5),
+# displayPars(common_bedg_dt) <- list(type=c("heatmap"), col= 'blue',gradient=c('color_min','color_max'), ylim = c(0, 0.5),
 #                                              background.title = col_back_title, cex.sampleNames = 0.4, legend=FALSE,
 #                                     cex.legend=0.4, fontsize.legend=0.1#,
 # #                                     groups = group_lab, col = color_by_tr
@@ -255,10 +265,11 @@ names <- names(l_gr_color)
 df_legend <- data.frame(x, y, names)
 
 fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
-  scale_colour_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
-  theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
+                          scale_colour_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
+                          theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
 
-leg <- g_legend(fake_legend)
+leg <- g_legend(fake_legend) 
+
 df_empty <- data.frame()
 
 shinyServer(function(input, output) {
@@ -419,8 +430,29 @@ shinyServer(function(input, output) {
 #     print(all_plot()) 
   })
   output$legend_track <- renderPlot({
-    ggplot(df) + geom_point() + theme(panel.border = element_blank(), panel.background = element_blank())
-    grid.draw(leg)         
+    # empty plot 
+    ggplot(df_empty) + geom_point() + theme(panel.border = element_blank(), panel.background = element_blank())
+    
+    # adding group color legend
+    grid.draw(leg)
+    
+    # getting scale for heatmap
+    leg_heatmap <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
+                              scale_fill_gradientn (guide = "colorbar",
+                              colours = c(color_min, color_max),
+                              values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                              limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                              breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                              labels = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                              name = "",
+                              rescaler = function(x,...) x,                                        
+                              oob = identity) + theme (legend.position = "none") + 
+                              theme(legend.position="bottom", legend.justification=c(1,0)) + 
+                              geom_blank()
+    
+    # extracting heatmap legend
+    leg_heatmap <- g_legend (leg_heatmap)
+    grid.draw(leg_heatmap)            
   })
   
   # Download n_events plot
