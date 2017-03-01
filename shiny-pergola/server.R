@@ -26,8 +26,10 @@ g_legend<-function(a.gplot){
 col_back_title="brown"
 tr_sum_size=40
 lab_group_plot <- "mean intake (g)"
+name_phases_tr <- "Phases"
 color_min <- 'white'
 color_max <- 'blue'
+phases_color <- 'gray'
 
 col_gr_1 <- "darkblue"
 col_gr_2 <- "brown"
@@ -46,9 +48,9 @@ leg_bool <- FALSE
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc/files" #crg
+base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc/files" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
 
@@ -87,7 +89,6 @@ max_v <- 0
 
 l_gr_color <- mapply(function(x, col) list(col),
        unique(b2v$condition), cb_palette[1:length(unique(b2v$condition))])
-# l_gr_color[["control"]]
 
 bed2pergViz <- function (data_df, gr_df, format_f="BED") {
   grps <- as.character(gr_df[[setdiff(colnames(gr_df), 'sample')]])
@@ -128,6 +129,19 @@ bed2pergViz <- function (data_df, gr_df, format_f="BED") {
 }
 
 l_gr_annotation_tr_bed <- bed2pergViz (b2v, exp_info)
+
+phases_file <- file.path(data_dir, "phases_dark.bed")
+
+{ if(file.exists(phases_file)) {
+     bed_phases <- import(phases_file, format = "BED")
+     phases_tr <- AnnotationTrack(bed_phases, name = paste ("", name_phases_tr, sep=""),
+                  fill = phases_color,
+                  background.title = col_back_title, col=NULL)    
+  }
+  else {
+    phases_tr <- NULL
+  }
+}
 
 # list_all <- list()
 # list_all
@@ -357,7 +371,7 @@ shinyServer(function(input, output) {
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt()), 
         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-                           unlist(list_all_bg[input$groups])),
+                           unlist(list_all_bg[input$groups]), phases_tr),
 #         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[c("case", "control")]), list_all_bg, groups_dt()),
 #         pt <- plotTracks(c(g_tr, list_all, o_tr),
 #                          from=pos(), to=pos() + input$windowsize,
@@ -368,14 +382,14 @@ shinyServer(function(input, output) {
       }
       else if (input$boxplot==FALSE && input$groups_plot==TRUE) {
         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-                           unlist(list_all_bg[input$groups]), groups_dt()),
+                           unlist(list_all_bg[input$groups]), groups_dt(), phases_tr),
                            from=input$dataInterval[1], to=input$dataInterval[2], 
                            ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                            shape = "box", stacking = "dense")
       }
       else if (input$boxplot==TRUE && input$groups_plot==FALSE) {
         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-                           unlist(list_all_bg[input$groups]), boxplot_dt()),
+                           unlist(list_all_bg[input$groups]), boxplot_dt(), phases_tr),
                          from=input$dataInterval[1], to=input$dataInterval[2], 
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                          shape = "box", stacking = "dense")
@@ -384,7 +398,7 @@ shinyServer(function(input, output) {
         
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
 #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt(), boxplot_dt()),
-        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt(), phases_tr),
 #       pt <- plotTracks(c(g_tr, list_all, o_tr),
 #                          from=pos(), to=pos() + input$windowsize,
 #                          from=input$tpos, to=input$tpos+ input$windowsize,
@@ -472,7 +486,8 @@ output$all_plot_tiff <- downloadHandler(
   filename <-  'tracks_plot.tiff' ,
   content <- function(file) {
     ## TODO size should be link to the number of tracks in the rendering
-    tiff(file, height=30, width = 16, units = 'cm', res=300)#height = 12, width = 17, units = 'cm'
+    tiff(file)
+#     tiff(file, height=30, width = 16, units = 'cm', res=300)#height = 12, width = 17, units = 'cm'
     
     if(length(input$bedGraphRange)==0){
       return(NULL)
@@ -480,27 +495,28 @@ output$all_plot_tiff <- downloadHandler(
     else{
       if (input$boxplot==FALSE && input$groups_plot==FALSE) {         
         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-                           unlist(list_all_bg[input$groups])),                        
+                           unlist(list_all_bg[input$groups]), phases_tr),                        
                          from=input$dataInterval[1], to=input$dataInterval[2], 
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                          shape = "box", stacking = "dense")        
       }
       else if (input$boxplot==FALSE && input$groups_plot==TRUE) {
         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-                           unlist(list_all_bg[input$groups]), groups_dt()),
+                           unlist(list_all_bg[input$groups]), groups_dt(), phases_tr),
                          from=input$dataInterval[1], to=input$dataInterval[2], 
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                          shape = "box", stacking = "dense")
       }
       else if (input$boxplot==TRUE && input$groups_plot==FALSE) {
         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-                           unlist(list_all_bg[input$groups]), boxplot_dt()),
+                           unlist(list_all_bg[input$groups]), boxplot_dt(), phases_tr),
                          from=input$dataInterval[1], to=input$dataInterval[2], 
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                          shape = "box", stacking = "dense")
       }
       else {                
-        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),                        
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
+                           unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt(), phases_tr),                        
                          from=input$dataInterval[1], to=input$dataInterval[2],
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
                          shape = "box", stacking = "dense")
