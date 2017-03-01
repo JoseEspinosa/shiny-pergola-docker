@@ -32,11 +32,16 @@ cb_palette <- c("#999999", "#E69F00", "#56B4E9",
 # Avoid problems if user set many groups
 cb_palette <- rep (cb_palette, 10) 
 
+# show legend
+leg_bool <- FALSE
+
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/pergola_data"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc/files" #crg
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
+# base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
@@ -75,13 +80,13 @@ l_gr_color <- mapply(function(x, col) list(col),
        unique(b2v$condition), cb_palette[1:length(unique(b2v$condition))])
 # l_gr_color[["control"]]
 
-bed2pergViz <- function (df, gr_df, format_f="BED") {
+bed2pergViz <- function (data_df, gr_df, format_f="BED") {
   grps <- as.character(gr_df[[setdiff(colnames(gr_df), 'sample')]])
   
   r <- lapply(unique(grps),
          function(g) {
            gr_samps <- grps %in% g
-           gr_files <- df$path[gr_samps]
+           gr_files <- data_df$path[gr_samps]
            
            lapply(gr_files, function (bed) {             
              id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", bed)
@@ -145,7 +150,6 @@ l_gr_data_tr_bg <-l_gr_data_tr_bg_tmp
 l_gr_annotation_tr_bg <- l_gr_data_tr_bg
 list_all_bg <- l_gr_data_tr_bg
 
-  
 # setdiff(l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
 # subsetByOverlaps (l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
 # list_all_bg <- list()
@@ -200,18 +204,18 @@ l_all_common_int <- sapply(unlist(l_gr_annotation_tr_bg),
 #                             return (data.frame(mcol))
 })
 
-df <- as.data.frame (unlist(l_all_common_int))
+df_common_int <- as.data.frame (unlist(l_all_common_int))
 
 # This was not working problably because number of rows was not correctly set
-# df <- data.frame(matrix(unlist(l_all_common_int), nrow=length(common_intervals), byrow=T))
-# names(df) <- paste ("id_", gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg))), sep="")
+# df_common_int <- data.frame(matrix(unlist(l_all_common_int), nrow=length(common_intervals), byrow=T))
+# names(df_common_int) <- paste ("id_", gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg))), sep="")
 id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg)))
-data_type <-  gsub(".+tr_(\\d+)_dt_(\\w+._.+$)", "\\2", names (unlist(l_gr_annotation_tr_bg)))
-names(df) <- paste ("id", id, data_type, sep="_")
+data_type <- gsub(".+tr_(\\d+)_dt_(\\w+._.+$)", "\\2", names (unlist(l_gr_annotation_tr_bg)))
+names(df_common_int) <- paste ("id", id, data_type, sep="_")
 
 gr_common_intervals <- GRanges()
 gr_common_intervals <- common_intervals
-mcols(gr_common_intervals) <- df
+mcols(gr_common_intervals) <- df_common_int
 
 # gr_common_intervals[, which(group_lab=="control")]
 # common_bedg_dt <- DataTrack(gr_common_intervals, name = lab_group_plot, type = "a",
@@ -280,7 +284,7 @@ shinyServer(function(input, output) {
 #                 groups = group_lab[which(group_lab==input$groups)], col = color_by_tr,
                 groups = group_lab[group_lab %in% input$groups], col = color_by_tr,
                 background.title = col_back_title, size = tr_sum_size,
-                legend = TRUE)
+                legend = leg_bool)
       common_bedg_dt
 #     }
   })
@@ -393,8 +397,6 @@ shinyServer(function(input, output) {
 #     plot (1:5, 2:6)
 #     print(all_plot()) 
   })
-
-  
   
   # Download n_events plot
 #   output$all_plot_tiff <- downloadHandler(
@@ -412,16 +414,16 @@ shinyServer(function(input, output) {
 output$all_plot_tiff <- downloadHandler(
   filename <-  'tracks_plot.tiff' ,
   content <- function(file) {
-    tiff(file)
+    ## TODO size should be link to the number of tracks in the rendering
+    tiff(file, height=30, width = 16, units = 'cm', res=300)#height = 12, width = 17, units = 'cm'
+    
     if(length(input$bedGraphRange)==0){
       return(NULL)
     }
-    
-    
     else{
-      if (input$boxplot==FALSE && input$groups_plot==FALSE) {        
+      if (input$boxplot==FALSE && input$groups_plot==FALSE) {         
         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-                           unlist(list_all_bg[input$groups])),
+                           unlist(list_all_bg[input$groups])),                        
                          from=input$dataInterval[1], to=input$dataInterval[2], 
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                          shape = "box", stacking = "dense")        
@@ -440,8 +442,8 @@ output$all_plot_tiff <- downloadHandler(
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                          shape = "box", stacking = "dense")
       }
-      else {
-        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),
+      else {                
+        pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),                        
                          from=input$dataInterval[1], to=input$dataInterval[2],
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
                          shape = "box", stacking = "dense")
