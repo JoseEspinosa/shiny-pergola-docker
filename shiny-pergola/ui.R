@@ -87,8 +87,8 @@ shinyUI(
                   column(12,
                            plotOutput("plotbed", height=800),
                            plotOutput("legend_track", height=30),
-                           plotOutput("envInfo", height=20)),
-                          textOutput("text1")
+                           plotOutput("envInfo", height=20))#,
+#                            textOutput("text1")
                         ),
                   column(3, downloadButton("all_plot_tiff", "Download snapshot"))
                 ),        

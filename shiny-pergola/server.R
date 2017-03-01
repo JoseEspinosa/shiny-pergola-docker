@@ -49,9 +49,9 @@ leg_bool <- FALSE
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc/files" #crg
+# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
 
@@ -365,14 +365,14 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$text1 <- renderText({ 
-#     paste (as.character (input$boxplot))
-#     c(plot_int, plot_heat, plot_gr) %in% input$plots2show
-#     avail_plots %in% c( "plot_int")
-    
-    
-    paste (as.character (avail_plots %in% input$plots2show)) 
-  })
+#   output$text1 <- renderText({ 
+# #     paste (as.character (input$boxplot))
+# #     c(plot_int, plot_heat, plot_gr) %in% input$plots2show
+# #     avail_plots %in% c( "plot_int")
+#     
+#     
+#     paste (as.character (avail_plots %in% input$plots2show)) 
+#   })
   
   all_plot <- reactive({
 #     if(length(input$windowsize)==0){
