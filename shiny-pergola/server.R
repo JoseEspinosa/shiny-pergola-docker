@@ -16,6 +16,13 @@ library(GenomicRanges)
 library (rtracklayer)
 library(ggplot2)
 
+#Extract Legend 
+g_legend<-function(a.gplot){ 
+  tmp <- ggplot_gtable(ggplot_build(a.gplot)) 
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
+  legend <- tmp$grobs[[leg]] 
+  return(legend)} 
+
 col_back_title="brown"
 tr_sum_size=40
 lab_group_plot <- "mean intake (g)"
@@ -231,14 +238,28 @@ mcols(gr_common_intervals) <- df_common_int
 # #                                     groups = group_lab, col = color_by_tr
 #                                       
 #   )
-# plotTracks(common_bedg_dt)#comment
 
+# plotTracks(common_bedg_dt)#comment
+ 
 # common_bedg_dt_boxPlot <- DataTrack(gr_common_intervals, name = lab_group_plot, type="a",
 #                   showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
 #                   groups = group_lab, col=color_by_tr,
 #                   legend=FALSE)
 
 g_tr <- GenomeAxisTrack()
+
+x <- rep (0, length(l_gr_color))
+y <- rep (1, length(l_gr_color))
+names <- names(l_gr_color)
+
+df_legend <- data.frame(x, y, names)
+
+fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
+  scale_colour_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
+  theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
+
+leg <- g_legend(fake_legend)
+df_empty <- data.frame()
 
 shinyServer(function(input, output) {
 #   output$genomicPositionSelect <- renderUI({
@@ -396,6 +417,10 @@ shinyServer(function(input, output) {
     all_plot()
 #     plot (1:5, 2:6)
 #     print(all_plot()) 
+  })
+  output$legend_track <- renderPlot({
+    ggplot(df) + geom_point() + theme(panel.border = element_blank(), panel.background = element_blank())
+    grid.draw(leg)         
   })
   
   # Download n_events plot
