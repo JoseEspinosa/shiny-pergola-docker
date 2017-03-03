@@ -10,8 +10,19 @@
 ### Generate bedgraph files like bed files and and object with all the bedGraph files    ###
 ### like know for the group plot                                                         ###
 ############################################################################################
+# local installation of the library
+# devtools::with_libpaths(new ="/users/cn/jespinosa/R/library", devtools::install_github("JoseEspinosa/Gviz"))
 
-library(Gviz)
+# line to be deleted only for loading library on crg ant
+{
+  if (file.exists("/users/cn/jespinosa")) {
+    library ("Gviz", lib="/users/cn/jespinosa/R/library")
+  }
+  else {
+    library(Gviz)
+  }
+}
+
 library(GenomicRanges)
 library (rtracklayer)
 library(ggplot2)
@@ -25,6 +36,7 @@ g_legend<-function(a.gplot){
 
 avail_plots <- c("plot_int", "plot_heat", "plot_gr")
 col_back_title="brown"
+tr_phase_size <- 5
 tr_gr_size <- 30
 lab_group_plot <- "Mean intake (grams)"
 name_phases_tr <- "Phases"
@@ -49,9 +61,9 @@ leg_bool <- FALSE
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
+base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
 
@@ -136,7 +148,7 @@ phases_file <- file.path(data_dir, "phases_dark.bed")
 { if(file.exists(phases_file)) {
      bed_phases <- import(phases_file, format = "BED")
      phases_tr <- AnnotationTrack(bed_phases, name = paste ("", name_phases_tr, sep=""),
-                  fill = phases_color,
+                  fill = phases_color, size = tr_phase_size, 
                   background.title = col_back_title, col=NULL)    
   }
   else {
@@ -314,7 +326,8 @@ shinyServer(function(input, output) {
     checkboxGroupInput( "plots2show", "Plots to display:", choices = c("Intervals" = avail_plots[1], 
                                                                       "Heatmap" = avail_plots[2], 
                                                                       "Groups mean" = avail_plots[3] ), 
-                                                          selected = avail_plots[1])    
+#                                                           selected = avail_plots[1])    
+                                                          selected = avail_plots)    
   })
   output$groups <- renderUI({
     checkboxGroupInput( "groups", "Groups to render:", choices = unique(group_lab), selected=unique(group_lab))
@@ -325,8 +338,8 @@ shinyServer(function(input, output) {
   output$boxplot <- renderUI({                                                             
     checkboxInput("boxplot", "Add boxplot", FALSE)
   })  
-  size <- reactive ({
-    length (plots2show) * 300
+  size_img <- reactive ({
+     length(input$plots2show) * 15
   })
   groups_dt <- reactive({
 #     if(!is.null(input$groups_plot) && input$groups_plot == TRUE) {
@@ -398,17 +411,20 @@ shinyServer(function(input, output) {
 #                          shape = "box", stacking = "dense")        
 #       }
       if (plots2show_bool[1] == TRUE) {
-        list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]), phases_tr)
+        list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
       }
       
       if (plots2show_bool[2] == TRUE) {
-        list_plots <- c(list_plots, unlist(list_all_bg[input$groups]), phases_tr)
+        list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
       }
   
       if (plots2show_bool[3] == TRUE) {
-        list_plots <- c(list_plots,  groups_dt(), phases_tr)
+        list_plots <- c(list_plots,  groups_dt())
       }
       
+      # phases if file present always show at the end
+      list_plots <- c(list_plots,  phases_tr) 
+
       pt <- plotTracks(list_plots,
                        from=input$dataInterval[1], to=input$dataInterval[2], 
                        ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
@@ -542,7 +558,8 @@ output$all_plot_tiff <- downloadHandler(
   filename <-  'tracks_plot.tiff' ,
   content <- function(file) {
     ## TODO size should be link to the number of tracks in the rendering
-    tiff(file)
+#     tiff(file)
+    tiff(file, height = size_img(), width = size_img()/2, units = 'cm', res = 300)
 #     tiff(file, height=30, width = 16, units = 'cm', res=300)#height = 12, width = 17, units = 'cm'
     
     if(length(input$bedGraphRange)==0){
@@ -553,23 +570,25 @@ output$all_plot_tiff <- downloadHandler(
     list_plots <- c(g_tr)
     
     if (plots2show_bool[1] == TRUE) {
-      list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]), phases_tr)
+      list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
     }
     
     if (plots2show_bool[2] == TRUE) {
-      list_plots <- c(list_plots, unlist(list_all_bg[input$groups]), phases_tr)
+      list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
     }
     
     if (plots2show_bool[3] == TRUE) {
-      list_plots <- c(list_plots,  groups_dt(), phases_tr)
+      list_plots <- c(list_plots,  groups_dt())
     }
+    
+    # phases if file present always show at the end
+    list_plots <- c(list_plots,  phases_tr) 
     
     pt <- plotTracks(list_plots,
                      from=input$dataInterval[1], to=input$dataInterval[2], 
                      ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                      shape = "box", stacking = "dense")  
     
-  
     pt
   }
     dev.off()
