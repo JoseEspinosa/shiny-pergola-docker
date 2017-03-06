@@ -90,7 +90,8 @@ shinyUI(
                            plotOutput("envInfo", height=20))#,
 #                            textOutput("text1")
                         ),
-                  column(3, downloadButton("all_plot_tiff", "Download snapshot"))
+                  column(3, downloadButton("all_plot_tiff", "Download snapshot"))#,
+#                   column(3, downloadButton("all_plot_tiff2", "Download snapshot2"))
                 ),        
         #         tabPanel("Plots",
         #                  

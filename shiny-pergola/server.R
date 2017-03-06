@@ -13,6 +13,13 @@
 # local installation of the library
 # devtools::with_libpaths(new ="/users/cn/jespinosa/R/library", devtools::install_github("JoseEspinosa/Gviz"))
 
+library(GenomicRanges)
+library (rtracklayer)
+library(ggplot2)
+library(grid)
+library (gridExtra)
+# library("cowplot")
+
 # line to be deleted only for loading library on crg ant
 {
   if (file.exists("/users/cn/jespinosa")) {
@@ -23,12 +30,8 @@
   }
 }
 
-library(GenomicRanges)
-library (rtracklayer)
-library(ggplot2)
-
 #Extract Legend 
-g_legend<-function(a.gplot){ 
+g_legend <- function(a.gplot){ 
   tmp <- ggplot_gtable(ggplot_build(a.gplot)) 
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
   legend <- tmp$grobs[[leg]] 
@@ -38,6 +41,8 @@ avail_plots <- c("plot_int", "plot_heat", "plot_gr")
 col_back_title="brown"
 tr_phase_size <- 5
 tr_gr_size <- 30
+min_heatmap <- 0
+max_heatmap <- 0.5
 lab_group_plot <- "Mean intake (grams)"
 name_phases_tr <- "Phases"
 color_min <- 'white'
@@ -63,9 +68,9 @@ leg_bool <- FALSE
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
+# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
-# base_dir <- "/pergola_data"
+base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
@@ -171,7 +176,7 @@ phases_file <- file.path(data_dir, "phases_dark.bed")
 
 l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph") 
 
-names(l_granges_bg[[2]][1])
+# names(l_granges_bg[[2]][1])
 
 l_gr_data_tr_bg_tmp <- lapply (seq_along(l_granges_bg), function (i_group_exp) {
         lapply (seq_along (l_granges_bg[[i_group_exp]]),  function (i_track) {                                                     
@@ -179,7 +184,7 @@ l_gr_data_tr_bg_tmp <- lapply (seq_along(l_granges_bg), function (i_group_exp) {
                                                      tr_name <- names(l_granges_bg[[i_group_exp]][i_track])                                                     
                                                      id <- gsub("^tr_(\\d+)(_dt.*$)", "\\1", tr_name)                                                     
                                                      d_track <- DataTrack(granges_obj,
-                                                                type="heatmap", ylim = c(0, 0.5),
+                                                                type="heatmap", ylim = c(0, max_heatmap),
                                                                 background.title = l_gr_color[[i_group_exp]],
                                                                 gradient=c(color_min, color_max), 
                                                                 showAxis = F, name = id)
@@ -247,8 +252,6 @@ l_all_common_int <- sapply(unlist(l_gr_annotation_tr_bg),
 })
 
 df_common_int <- as.data.frame (unlist(l_all_common_int))
-data(twoGroups)
-dTrack <- DataTrack(twoGroups, name = "uniform")
 
 # This was not working problably because number of rows was not correctly set
 # df_common_int <- data.frame(matrix(unlist(l_all_common_int), nrow=length(common_intervals), byrow=T))
@@ -284,18 +287,24 @@ mcols(gr_common_intervals) <- df_common_int
 #                   legend=FALSE)
 
 g_tr <- GenomeAxisTrack()
+x <- runif(length(l_gr_color),0,100)
+y <-runif(length(l_gr_color),100,200)
 
-x <- rep (0, length(l_gr_color))
-y <- rep (1, length(l_gr_color))
 names <- names(l_gr_color)
 
 df_legend <- data.frame(x, y, names)
+colnames(df_legend) <- c("x", "y", "names")
+# fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
+# #                ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
+#                           scale_fill_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
+# #                           theme(legend.position="bottom", legend.justification=c(0,1))
+#                           theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
 
-fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
-                          scale_colour_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
-                          theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
+# fake_legend
 
-leg <- g_legend(fake_legend) 
+# fake_legend
+# # el problema esta aqui
+# leg_gr <- g_legend(fake_legend) 
 
 df_empty <- data.frame()
 
@@ -316,11 +325,11 @@ shinyServer(function(input, output) {
   output$dataInterval <- renderUI({
     sliderInput("dataInterval", "Data interval:", 
                 min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
-                value = c(min(g_min_start, 1000), g_min_start+5000), step= 1000)
+                value = c(min(g_min_start, 1000), g_min_start+10000), step= 1000)
   }) 
   output$bedGraphRange <- renderUI({
     sliderInput("bedGraphRange", "Range bedgraph:", 
-                min = min_v, max = max_v, value = c(0, 0.5), step= 0.1)
+                min = min_v, max = max_v, value = c(0, max_heatmap), step= 0.1)
   })
   output$plots2show <- renderUI({
     checkboxGroupInput( "plots2show", "Plots to display:", choices = c("Intervals" = avail_plots[1], 
@@ -484,6 +493,52 @@ shinyServer(function(input, output) {
     }
   })
   
+  leg_group <- reactive ({
+#     fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
+#       #                ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
+#       scale_fill_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
+#       #                           theme(legend.position="bottom", legend.justification=c(0,1))
+#       theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
+#     
+    
+    gr_legend_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
+                              scale_colour_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
+      #                           theme(legend.position="bottom", legend.justification=c(0,1))
+                              theme(legend.position="bottom", legend.justification=c(0, 1)) + geom_blank()
+    
+    leg_gr <- g_legend (gr_legend_p)
+  })
+
+  leg_heatmap <- reactive({
+    if(length(input$bedGraphRange)==0){
+      leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
+        scale_fill_gradientn (guide = "colorbar",
+                              colours = c(color_min, color_max),
+                              values = c(min_heatmap , max_heatmap),
+                              limits = c(min_heatmap, max_heatmap),
+                              breaks   = c(min_heatmap, max_heatmap),
+                              labels = c(min_heatmap, max_heatmap),
+                              name = "",
+                              rescaler = function(x,...) x,                                        
+                              oob = identity) + theme (legend.position = "none") + 
+                              theme(legend.position="bottom", legend.justification=c(1,0)) + geom_blank() 
+    }
+    else {
+    leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
+      scale_fill_gradientn (guide = "colorbar",
+                            colours = c(color_min, color_max),
+                            values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                            limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                            breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                            labels = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                            name = "",
+                            rescaler = function(x,...) x,                                        
+                            oob = identity) + theme (legend.position = "none") + 
+                            theme(legend.position="bottom", legend.justification=c(1,0)) + geom_blank() 
+    }
+    # extracting heatmap legend
+    leg_heatmap <- g_legend (leg_heatmap_p)
+  })
   # Is the only way I find to save the plot, because once it is instanciated one time (all_plot)
   # then can not be call a second time in the downloading expression
 #   dupl_plot <- reactive({
@@ -517,28 +572,35 @@ shinyServer(function(input, output) {
   })
   output$legend_track <- renderPlot({
     # empty plot 
-    ggplot(df_empty) + geom_point() + theme(panel.border = element_blank(), panel.background = element_blank())
+    grid.newpage()
+      plot_empty <- ggplot(df_empty) + geom_point() + theme(panel.border = element_blank(), panel.background = element_blank())
+#     
+#     # adding group color legend
+#     grid.draw(leg_gr)
+#     
+#     # getting scale for heatmap
     
-    # adding group color legend
-    grid.draw(leg)
-    
-    # getting scale for heatmap
-    leg_heatmap <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
-                              scale_fill_gradientn (guide = "colorbar",
-                              colours = c(color_min, color_max),
-                              values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                              limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                              breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                              labels = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                              name = "",
-                              rescaler = function(x,...) x,                                        
-                              oob = identity) + theme (legend.position = "none") + 
-                              theme(legend.position="bottom", legend.justification=c(1,0)) + 
-                              geom_blank()
-    
-    # extracting heatmap legend
-    leg_heatmap <- g_legend (leg_heatmap)
-    grid.draw(leg_heatmap)            
+#     leg_heatmap <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
+#                               scale_fill_gradientn (guide = "colorbar",
+#                               colours = c(color_min, color_max),
+#                               values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+#                               limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+#                               breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+#                               labels = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+#                               name = "",
+#                               rescaler = function(x,...) x,                                        
+#                               oob = identity) + theme (legend.position = "none") + 
+#                               theme(legend.position="bottom", legend.justification=c(1,0)) + 
+#                               geom_blank()
+# #     
+#     # extracting heatmap legend
+# #     leg_heatmap <- g_legend (leg_heatmap)
+    grid.draw(leg_heatmap ())
+    grid.draw(leg_group ())
+#     p1 <- leg_heatmap ()
+#     p2 <- leg_group ()
+#     grid.arrange(p1, p2, heights = c(0.25, 2))
+                
   })
   
   # Download n_events plot
@@ -593,4 +655,55 @@ output$all_plot_tiff <- downloadHandler(
   }
     dev.off()
   })
+
+### second download
+# output$all_plot_tiff2 <- downloadHandler(
+#   filename <-  'tracks_plot2.tiff' ,
+#   content <- function(file) {
+#     ## TODO size should be link to the number of tracks in the rendering
+#     #     tiff(file)
+#     tiff(file, height = size_img(), width = size_img()/2, units = 'cm', res = 300)
+#     #     tiff(file, height=30, width = 16, units = 'cm', res=300)#height = 12, width = 17, units = 'cm'
+#             
+#     if(length(input$bedGraphRange)==0){
+#       return(NULL)
+#     }
+#     else {
+#       plots2show_bool <- avail_plots %in% input$plots2show
+#       list_plots <- c(g_tr)
+#       
+#       if (plots2show_bool[1] == TRUE) {
+#         list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+#       }
+#       
+#       if (plots2show_bool[2] == TRUE) {
+#         list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
+#       }
+#       
+#       if (plots2show_bool[3] == TRUE) {
+#         list_plots <- c(list_plots,  groups_dt())
+#       }
+#       
+#       # phases if file present always show at the end
+#       list_plots <- c(list_plots,  phases_tr) 
+#       
+#       nrows <- 3
+#       ncols <- 3
+#       grid.newpage() 
+#       pushViewport(viewport(layout=grid.layout(nrows, ncols)))
+#       pushViewport(viewport(layout.pos.col=1:3, 
+#                             layout.pos.row=1:2))
+#       
+#       pt <- plotTracks(list_plots,
+#                        from=input$dataInterval[1], to=input$dataInterval[2], 
+#                        ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+#                        shape = "box", stacking = "dense")  
+#       
+# #       pt
+#       popViewport(1)
+#       
+#       print(leg_heatmap (), vp = viewport(layout.pos.row = 3, layout.pos.col = 1:3))
+#     }
+#     dev.off()
+#   })
 })
