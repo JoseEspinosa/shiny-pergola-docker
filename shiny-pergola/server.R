@@ -66,9 +66,9 @@ leg_bool <- FALSE
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
+base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
 
@@ -495,16 +495,13 @@ shinyServer(function(input, output) {
   })
   
   leg_group <- reactive ({
-#     fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
-#       #                ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
-#       scale_fill_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
-#       #                           theme(legend.position="bottom", legend.justification=c(0,1))
-#       theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
-#     
+    
+    if(!is.null(input$groups)) {
+      df_legend <- subset(df_legend, names %in% input$groups)
+    }
     
     gr_legend_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
-                              scale_colour_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
-      #                           theme(legend.position="bottom", legend.justification=c(0,1))
+                              scale_colour_manual (values=color_by_tr) + guides(color=guide_legend(title=NULL)) + 
                               theme(legend.position="bottom", legend.justification=c(0, 1)) + geom_blank()
     
     leg_gr <- g_legend (gr_legend_p)
@@ -518,7 +515,7 @@ shinyServer(function(input, output) {
                               values = c(min_heatmap , max_heatmap),
                               limits = c(min_heatmap, max_heatmap),
                               breaks   = c(min_heatmap, max_heatmap),
-                              labels = c(min_heatmap, max_heatmap),
+                              labels = c(min_heatmap, paste(max_heatmap),"  "),
                               name = "",
                               rescaler = function(x,...) x,                                        
                               oob = identity) + theme (legend.position = "none") + 
@@ -531,7 +528,7 @@ shinyServer(function(input, output) {
                             values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
                             limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
                             breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                            labels = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                            labels = c(input$bedGraphRange[1], paste(input$bedGraphRange[2]," ")),
                             name = "",
                             rescaler = function(x,...) x,                                        
                             oob = identity) + theme (legend.position = "none") + 
