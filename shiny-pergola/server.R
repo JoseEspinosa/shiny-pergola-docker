@@ -66,11 +66,11 @@ leg_bool <- FALSE
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 # base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
-base_dir <- "/pergola_data"
+# base_dir <- "/pergola_data"
 
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
@@ -290,16 +290,17 @@ g_tr <- GenomeAxisTrack()
 x <- runif(length(l_gr_color),0,100)
 y <-runif(length(l_gr_color),100,200)
 
-names <- names(l_gr_color)
-
-df_legend <- data.frame(x, y, names)
+# names <- names(l_gr_color)
+# names
+df_legend <- data.frame(x, y, unique(group_lab))
 colnames(df_legend) <- c("x", "y", "names")
 # fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
 # #                ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
 #                           scale_fill_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
 # #                           theme(legend.position="bottom", legend.justification=c(0,1))
 #                           theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
-
+# group_lab <- factor(group_lab, levels = unique(group_lab))
+# color_by_tr <- unlist(l_gr_color[unique(group_lab)])
 # fake_legend
 
 # fake_legend
@@ -341,12 +342,12 @@ shinyServer(function(input, output) {
   output$groups <- renderUI({
     checkboxGroupInput( "groups", "Groups to render:", choices = unique(group_lab), selected=unique(group_lab))
   })
-  output$groups_plot <- renderUI({                                                             
-    checkboxInput("groups_plot", "Add group plot", FALSE)
-  })
-  output$boxplot <- renderUI({                                                             
-    checkboxInput("boxplot", "Add boxplot", FALSE)
-  })  
+#   output$groups_plot <- renderUI({                                                             
+#     checkboxInput("groups_plot", "Add group plot", FALSE)
+#   })
+#   output$boxplot <- renderUI({                                                             
+#     checkboxInput("boxplot", "Add boxplot", FALSE)
+#   })  
   size_img <- reactive ({
      length(input$plots2show) * 15
   })

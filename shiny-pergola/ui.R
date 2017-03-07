@@ -68,9 +68,9 @@ shinyUI(
                        uiOutput("idSelect"),                       
 #                        uiOutput("genomicPositionSelect"),
                        uiOutput("plots2show"),
-                       uiOutput("groups"),
-                       uiOutput("groups_plot"),
-                       uiOutput("boxplot")
+                       uiOutput("groups")
+#                        uiOutput("groups_plot"),
+#                        uiOutput("boxplot")
       ),
             conditionalPanel(condition="input.tabs_p=='About'",
                              h4("Introduction") 
@@ -86,7 +86,7 @@ shinyUI(
                  fluidRow(                  
                   column(12,
                            plotOutput("plotbed", height=800),
-                           plotOutput("legend_track", height=30),
+                           plotOutput("legend_track", height=50),
                            plotOutput("envInfo", height=20))#,
 #                            textOutput("text1")
                         ),
