@@ -63,13 +63,13 @@ shinyUI(
       # Load info such as experimental info
       conditionalPanel(condition="input.tabs_p=='Browser'",
 #                        uiOutput("windowsize"), # server.R
-                       uiOutput("bedGraphRange"),
-                       uiOutput("dataInterval"),
-                       uiOutput("idSelect"),                       
+                       uiOutput("bedGraphRange_tab"),
+                       uiOutput("dataInterval_tab"),
+#                        uiOutput("idSelect"),                       
 #                        uiOutput("genomicPositionSelect"),
-                       uiOutput("plots2show"),
-                       uiOutput("groups"),
-                       uiOutput("type_gr_plot")
+                       uiOutput("plots2show_tab"),
+                       uiOutput("groups_tab"),
+                       uiOutput("type_gr_plot_tab")
 #                        uiOutput("groups_plot"),
 #                        uiOutput("boxplot")
       ),

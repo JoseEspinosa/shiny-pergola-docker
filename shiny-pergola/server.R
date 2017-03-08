@@ -42,7 +42,7 @@ g_legend <- function(a.gplot){
 avail_plots <- c("plot_int", "plot_heat", "plot_gr")
 col_back_title="brown"
 tr_phase_size <- 2
-tr_gr_size <- 20
+tr_gr_size <- 10
 min_heatmap <- 0
 max_heatmap <- 0.5
 lab_group_plot <- "Mean intake (grams)"
@@ -152,10 +152,11 @@ l_gr_annotation_tr_bed <- bed2pergViz (b2v, exp_info)
 
 phases_file <- file.path(data_dir, "phases_dark.bed")
 
-{ if(file.exists(phases_file)) {
+{ 
+  if(file.exists(phases_file)) {
      bed_phases <- import(phases_file, format = "BED")
-     phases_tr <- AnnotationTrack(bed_phases, name = paste ("", name_phases_tr, sep=""),
-                  fill = phases_color, size = tr_phase_size, 
+     phases_tr <- AnnotationTrack(bed_phases, #name = paste ("", name_phases_tr, sep=""),
+                  fill = phases_color, rotation.title=1, #cex.sampleNames = 0.1, #size = tr_phase_size,
                   background.title = col_back_title, col=NULL)    
   }
   else {
@@ -325,37 +326,50 @@ shinyServer(function(input, output) {
 #     sliderInput("windowsize", "Window size:", min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
 #                 value =min(g_max_end, 3000), step = min(g_max_end, 300))
 #   })
-  output$dataInterval <- renderUI({
-    sliderInput("dataInterval", "Data interval:", 
-                min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
-                value = c(min(g_min_start, 1000), g_min_start + 10000), step= 1000)
+  output$bedGraphRange_tab <- renderUI({
+    sliderInput("bedGraphRange", label = h4("Range bedgraph:"), 
+                min = min_v, max = max_v, 
+                value = c(0, max_heatmap), 
+                step= 0.1)
+  })
+  output$dataInterval_tab <- renderUI({
+    sliderInput("dataInterval", label = h4("Data interval:"), 
+                min = min(g_min_start, 1000), 
+                max = max(g_max_end, 1000000), 
+                value = c(min(g_min_start, 1000), 
+                          g_min_start + 10000), 
+                step= 1000)
 #                 value = c(1, 3628800), step= 1000)#del
   }) 
-  output$bedGraphRange <- renderUI({
-    sliderInput("bedGraphRange", "Range bedgraph:", 
-                min = min_v, max = max_v, value = c(0, max_heatmap), step= 0.1)
+  output$plots2show_tab <- renderUI({
+    checkboxGroupInput( "plots2show", label = h4("Plots to display:"),
+                        choices = c("Intervals" = avail_plots[1], 
+                                    "Heatmap" = avail_plots[2], 
+                                    "Groups mean" = avail_plots[3] ), 
+#                         selected = avail_plots[1])
+#                         selected = avail_plots)
+                        selected = avail_plots[1:2])
   })
-  output$plots2show <- renderUI({
-    checkboxGroupInput( "plots2show", "Plots to display:", choices = c("Intervals" = avail_plots[1], 
-                                                                      "Heatmap" = avail_plots[2], 
-                                                                      "Groups mean" = avail_plots[3] ), 
-#                                                           selected = avail_plots[1])    
-#                                                           selected = avail_plots)    
-                                                                       selected = avail_plots[1:2])    
-  })
-  output$groups <- renderUI({
-    checkboxGroupInput( "groups", "Groups to render:", choices = unique(group_lab), selected=unique(group_lab))
+  output$groups_tab <- renderUI({
+    checkboxGroupInput( "groups", label = h4("Groups to render:"), 
+                        choices = unique(group_lab), 
+                        selected=unique(group_lab))
   })
 #   output$groups_plot <- renderUI({                                                             
 #     checkboxInput("groups_plot", "Add group plot", FALSE)
 #   })
 #   output$boxplot <- renderUI({                                                             
 #     checkboxInput("boxplot", "Add boxplot", FALSE)
-#   })  
-  output$type_gr_plot <- renderUI({    
-    selectInput("type_gr_plot", label = h4("Group plot type:"),
-                choices = list("Lines plot" = "a", "Boxplot" = "boxplot", "Confint" = "confint"), 
-                selected = "a")       
+#   }) 
+  output$type_gr_plot_tab <- renderUI({
+    if (!"plot_gr" %in% input$plots2show) {
+      return ()
+    }
+    else {
+      return (selectInput("type_gr_plot", label = h4("Group plot type:"),
+                          choices = list("Lines plot" = "a", "Boxplot" = "boxplot", "Confint" = "confint"), 
+                          selected = "a"))
+    }     
   })
   size_img <- reactive ({
      length(input$plots2show) * 15
@@ -371,7 +385,7 @@ shinyServer(function(input, output) {
                 showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
 #                 groups = group_lab[which(group_lab==input$groups)], col = color_by_tr, #del
                 groups = group_lab[group_lab %in% input$groups], col = color_by_tr,
-                background.title = col_back_title, size = tr_gr_size,
+                background.title = col_back_title, #size = tr_gr_size,
                 legend = leg_bool)
       common_bedg_dt
 #     }
