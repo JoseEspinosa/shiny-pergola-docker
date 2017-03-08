@@ -74,6 +74,14 @@ base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
 
+# Only for development
+# Setting folder when running container
+{
+  if (file.exists("/usr/bin/shiny-server.sh")) {
+    base_dir <- "/pergola_data"
+  }
+}
+
 # data_dir <- dir(file.path(base_dir,"bed4test"))
 # data_dir <- file.path(base_dir,"bed4test")
 # data_dir <- file.path(base_dir, "GB_indidividual_files")
@@ -676,7 +684,7 @@ output$all_plot_tiff <- downloadHandler(
     pt
   }
     dev.off()
-  })
+})
 
 ### second download
 # output$all_plot_tiff2 <- downloadHandler(
