@@ -13,6 +13,8 @@
 # local installation of the library
 # devtools::with_libpaths(new ="/users/cn/jespinosa/R/library", devtools::install_github("JoseEspinosa/Gviz"))
 
+options(warn=1)
+
 library(GenomicRanges)
 library (rtracklayer)
 library(ggplot2)
@@ -39,8 +41,8 @@ g_legend <- function(a.gplot){
 
 avail_plots <- c("plot_int", "plot_heat", "plot_gr")
 col_back_title="brown"
-tr_phase_size <- 5
-tr_gr_size <- 30
+tr_phase_size <- 2
+tr_gr_size <- 20
 min_heatmap <- 0
 max_heatmap <- 0.5
 lab_group_plot <- "Mean intake (grams)"
@@ -67,8 +69,8 @@ leg_bool <- FALSE
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
 
@@ -326,7 +328,8 @@ shinyServer(function(input, output) {
   output$dataInterval <- renderUI({
     sliderInput("dataInterval", "Data interval:", 
                 min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
-                value = c(min(g_min_start, 1000), g_min_start+10000), step= 1000)
+                value = c(min(g_min_start, 1000), g_min_start + 10000), step= 1000)
+#                 value = c(1, 3628800), step= 1000)#del
   }) 
   output$bedGraphRange <- renderUI({
     sliderInput("bedGraphRange", "Range bedgraph:", 
@@ -337,7 +340,8 @@ shinyServer(function(input, output) {
                                                                       "Heatmap" = avail_plots[2], 
                                                                       "Groups mean" = avail_plots[3] ), 
 #                                                           selected = avail_plots[1])    
-                                                          selected = avail_plots)    
+#                                                           selected = avail_plots)    
+                                                                       selected = avail_plots[1:2])    
   })
   output$groups <- renderUI({
     checkboxGroupInput( "groups", "Groups to render:", choices = unique(group_lab), selected=unique(group_lab))
@@ -348,18 +352,24 @@ shinyServer(function(input, output) {
 #   output$boxplot <- renderUI({                                                             
 #     checkboxInput("boxplot", "Add boxplot", FALSE)
 #   })  
+  output$type_gr_plot <- renderUI({    
+    selectInput("type_gr_plot", label = h4("Group plot type:"),
+                choices = list("Lines plot" = "a", "Boxplot" = "boxplot", "Confint" = "confint"), 
+                selected = "a")       
+  })
   size_img <- reactive ({
      length(input$plots2show) * 15
   })
   groups_dt <- reactive({
 #     if(!is.null(input$groups_plot) && input$groups_plot == TRUE) {
       
-#       gr_common_intervals_subset <- gr_common_intervals [ , which(group_lab==input$groups)]
+#       gr_common_intervals_subset <- gr_common_intervals [ , which(group_lab==input$groups)] #del
       gr_common_intervals_subset <- gr_common_intervals [ , group_lab %in% input$groups] 
       
-      common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = "a",
+#       common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = "a", #del
+      common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = input$type_gr_plot,
                 showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-#                 groups = group_lab[which(group_lab==input$groups)], col = color_by_tr,
+#                 groups = group_lab[which(group_lab==input$groups)], col = color_by_tr, #del
                 groups = group_lab[group_lab %in% input$groups], col = color_by_tr,
                 background.title = col_back_title, size = tr_gr_size,
                 legend = leg_bool)
@@ -389,12 +399,12 @@ shinyServer(function(input, output) {
   })
   
 #   output$text1 <- renderText({ 
-# #     paste (as.character (input$boxplot))
-# #     c(plot_int, plot_heat, plot_gr) %in% input$plots2show
-# #     avail_plots %in% c( "plot_int")
-#     
-#     
-#     paste (as.character (avail_plots %in% input$plots2show)) 
+# # #     paste (as.character (input$boxplot))
+# # #     c(plot_int, plot_heat, plot_gr) %in% input$plots2show
+# # #     avail_plots %in% c( "plot_int")
+# #     
+#     paste(as.character (input$type_gr_plot),"test")
+# #     paste (as.character ("test")) 
 #   })
   
   all_plot <- reactive({
@@ -515,7 +525,7 @@ shinyServer(function(input, output) {
                               values = c(min_heatmap , max_heatmap),
                               limits = c(min_heatmap, max_heatmap),
                               breaks   = c(min_heatmap, max_heatmap),
-                              labels = c(min_heatmap, paste(max_heatmap),"  "),
+                              labels = c(min_heatmap, paste(max_heatmap,"     ", sep="")),
                               name = "",
                               rescaler = function(x,...) x,                                        
                               oob = identity) + theme (legend.position = "none") + 
@@ -528,7 +538,7 @@ shinyServer(function(input, output) {
                             values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
                             limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
                             breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                            labels = c(input$bedGraphRange[1], paste(input$bedGraphRange[2]," ")),
+                            labels = c(input$bedGraphRange[1], paste(input$bedGraphRange[2],"    ", sep="")),
                             name = "",
                             rescaler = function(x,...) x,                                        
                             oob = identity) + theme (legend.position = "none") + 

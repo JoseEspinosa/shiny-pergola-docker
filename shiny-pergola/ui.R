@@ -68,7 +68,8 @@ shinyUI(
                        uiOutput("idSelect"),                       
 #                        uiOutput("genomicPositionSelect"),
                        uiOutput("plots2show"),
-                       uiOutput("groups")
+                       uiOutput("groups"),
+                       uiOutput("type_gr_plot")
 #                        uiOutput("groups_plot"),
 #                        uiOutput("boxplot")
       ),
