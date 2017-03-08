@@ -10,39 +10,7 @@
 ############################################################################################
 
 # Running the app
-# runApp ("/Users/jespinosa/git/shinyPergola/apps/minPhenBrowser")
-
-# library(shiny)
-# library("Gviz")
-# library('GenomicRanges')
-# library ("rtracklayer")
-
-# fluidPage(
-#   # Application title
-#   titlePanel("Word Cloud"),
-#   
-#   sidebarLayout(
-#     # Sidebar with a slider and selection inputs
-#     sidebarPanel(
-#       selectInput("selection", "Choose a book:",
-#                   choices = books),
-#       actionButton("update", "Change"),
-#       hr(),
-#       sliderInput("freq",
-#                   "Minimum Frequency:",
-#                   min = 1,  max = 50, value = 15),
-#       sliderInput("max",
-#                   "Maximum Number of Words:",
-#                   min = 1,  max = 300,  value = 100)
-#     ),
-#     
-#     # Show Word Cloud
-#     mainPanel(
-#       plotOutput("plot")
-#     )
-#   )
-# )
-
+# shiny::runApp('git/shiny-pergola-docker/shiny-pergola')
 
 shinyUI(
   fluidPage(
@@ -60,25 +28,16 @@ shinyUI(
     ),
     
     sidebarPanel(
-      # Load info such as experimental info
       conditionalPanel(condition="input.tabs_p=='Browser'",
-#                        uiOutput("windowsize"), # server.R
                        uiOutput("bedGraphRange_tab"),
                        uiOutput("dataInterval_tab"),
-#                        uiOutput("idSelect"),                       
-#                        uiOutput("genomicPositionSelect"),
                        uiOutput("plots2show_tab"),
                        uiOutput("groups_tab"),
                        uiOutput("type_gr_plot_tab")
-#                        uiOutput("groups_plot"),
-#                        uiOutput("boxplot")
       ),
             conditionalPanel(condition="input.tabs_p=='About'",
                              h4("Introduction") 
-            )#,
-      #       conditionalPanel(condition="input.tabs_p=='Plots'",
-      #                        h4("Plots") 
-      #       )
+            )
     ),
     
     mainPanel(
@@ -92,34 +51,7 @@ shinyUI(
 #                            textOutput("text1")
                         ),
                   column(3, downloadButton("all_plot_tiff", "Download snapshot"))#,
-#                   column(3, downloadButton("all_plot_tiff2", "Download snapshot2"))
-                ),        
-        #         tabPanel("Plots",
-        #                  
-        #                  fluidRow(
-        #                    column(3, downloadButton("barPlotValueTiff", "Download tiff")),
-        #                    column(9, plotOutput("barPlotValue"))
-        #                  ),
-        #                  fluidRow(
-        #                    column(3, downloadButton("barPlotDurationTiff", "Download tiff")),
-        #                    column(9, plotOutput("barPlotDuration"))
-        #                  ),
-        #                  #output$barPlotNumberTiff 
-        #                  fluidRow(
-        #                    column(3, downloadButton("barPlotNumberTiff", "Download tiff")),
-        #                    column(9, plotOutput("barPlotN"))
-        #                  ),
-        #                  fluidRow(
-        #                    column(3, downloadButton("barPlotRateTiff", "Download tiff")),
-        #                    column(9, plotOutput("barPlotRate"))
-        #                  )
-        #         ),        
-        #         tabPanel("Upload data",
-        #                  HTML('<p>Additional data</p>'),  
-        #                  tableOutput('bed'),     
-        #                  HTML('<p>Phases data</p>'),  
-        #                  tableOutput('fileEnv'),
-        #                  HTML('<p>End data</p>')),    
+                ),            
         tabPanel("About",
                  HTML('<p>Pergola</p>')),
         

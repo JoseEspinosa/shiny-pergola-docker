@@ -164,7 +164,7 @@ phases_file <- file.path(data_dir, "phases_dark.bed")
   if(file.exists(phases_file)) {
      bed_phases <- import(phases_file, format = "BED")
      phases_tr <- AnnotationTrack(bed_phases, #name = paste ("", name_phases_tr, sep=""),
-                  fill = phases_color, rotation.title=1, #cex.sampleNames = 0.1, #size = tr_phase_size,
+                  fill = phases_color, #rotation.title=1, #cex.sampleNames = 0.1, #size = tr_phase_size,
                   background.title = col_back_title, col=NULL)    
   }
   else {
@@ -321,19 +321,6 @@ colnames(df_legend) <- c("x", "y", "names")
 df_empty <- data.frame()
 
 shinyServer(function(input, output) {
-#   output$genomicPositionSelect <- renderUI({
-    #     sliderInput( "tpos", "Time Point:", min = 10, max = g_max_end - 10, value = g_min_start + 10 )
-#     sliderInput( "tpos", "Time Point:", min = 0, max = g_max_end - 10, value = 0 )
-#   })
-  
-  #   pos <-  reactive({
-  #     min( max( input$windowsize + 1, input$tpos ), max(g_max_end) - input$windowsize - 1 )    
-  #   })
-  
-#   output$windowsize <- renderUI({                                                             
-#     sliderInput("windowsize", "Window size:", min = min(g_min_start, 1000), max = max(g_max_end, 1000000), 
-#                 value =min(g_max_end, 3000), step = min(g_max_end, 300))
-#   })
   output$bedGraphRange_tab <- renderUI({
     sliderInput("bedGraphRange", label = h4("Range bedgraph:"), 
                 min = min_v, max = max_v, 
@@ -363,12 +350,6 @@ shinyServer(function(input, output) {
                         choices = unique(group_lab), 
                         selected=unique(group_lab))
   })
-#   output$groups_plot <- renderUI({                                                             
-#     checkboxInput("groups_plot", "Add group plot", FALSE)
-#   })
-#   output$boxplot <- renderUI({                                                             
-#     checkboxInput("boxplot", "Add boxplot", FALSE)
-#   }) 
   output$type_gr_plot_tab <- renderUI({
     if (!"plot_gr" %in% input$plots2show) {
       return ()
@@ -384,53 +365,24 @@ shinyServer(function(input, output) {
   })
   groups_dt <- reactive({
 #     if(!is.null(input$groups_plot) && input$groups_plot == TRUE) {
-      
-#       gr_common_intervals_subset <- gr_common_intervals [ , which(group_lab==input$groups)] #del
+
       gr_common_intervals_subset <- gr_common_intervals [ , group_lab %in% input$groups] 
       
-#       common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = "a", #del
       common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = input$type_gr_plot,
                 showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-#                 groups = group_lab[which(group_lab==input$groups)], col = color_by_tr, #del
                 groups = group_lab[group_lab %in% input$groups], col = color_by_tr,
                 background.title = col_back_title, #size = tr_gr_size,
                 legend = leg_bool)
+      
       common_bedg_dt
-#     }
   })
   
-  #  boxplot datatrack
-  # it is overlap and then is very difficult to see anything
-  boxplot_dt <- reactive({    
-    if(!is.null(input$boxplot) && input$boxplot == TRUE) {
-      common_bedg_dt_boxplot <- groups_dt()
-      displayPars(common_bedg_dt_boxplot) <- list(type=c("boxplot"))      
-#       showSampleNames = TRUE
-      #       for (i in 1:length(list_gr)){
-      #         displayPars(list_gr[[i]]) <- list(type=c("boxplot"), fill=cb_palette[i])
-      # #           list(type=c("boxplot"), fill=cb_palette[i])
-      #       }
-      #       
-      #       o_tr_boxplot <-OverlayTrack(list_gr)
-      #       
-      #       IdeogramTrack(genome=input$ucscgen, chromosome=input$chr,
-      #                     showId=TRUE, showBandId=TRUE)
-      #       o_tr_boxplot
-      common_bedg_dt_boxplot
-    }
-  })
-  
+  # Render variables to see content 
 #   output$text1 <- renderText({ 
-# # #     paste (as.character (input$boxplot))
-# # #     c(plot_int, plot_heat, plot_gr) %in% input$plots2show
-# # #     avail_plots %in% c( "plot_int")
-# #     
-#     paste(as.character (input$type_gr_plot),"test")
-# #     paste (as.character ("test")) 
+#     paste(as.character ("test", input$type_gr_plot))
 #   })
   
   all_plot <- reactive({
-#     if(length(input$windowsize)==0){
     if(length(input$bedGraphRange)==0){
       return(NULL)
     }
@@ -438,20 +390,7 @@ shinyServer(function(input, output) {
       plots2show_bool <- avail_plots %in% input$plots2show
       list_plots <- c(g_tr)
       
-          
-#       if (input$boxplot==FALSE && input$groups_plot==TRUE) {
-# #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt), 
-# #         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt()), 
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-#                            unlist(list_all_bg[input$groups]), phases_tr),
-# #         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[c("case", "control")]), list_all_bg, groups_dt()),
-# #         pt <- plotTracks(c(g_tr, list_all, o_tr),
-# #                          from=pos(), to=pos() + input$windowsize,
-# #                          from=input$tpos, to=input$tpos+ input$windowsize,
-#                          from=input$dataInterval[1], to=input$dataInterval[2], 
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                          shape = "box", stacking = "dense")        
-#       }
+      # Appending the plots if selected
       if (plots2show_bool[1] == TRUE) {
         list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
       }
@@ -464,64 +403,14 @@ shinyServer(function(input, output) {
         list_plots <- c(list_plots,  groups_dt())
       }
       
-      # phases if file present always show at the end
+      # Load phases track when present 
+      # Always last plot
       list_plots <- c(list_plots,  phases_tr) 
 
       pt <- plotTracks(list_plots,
                        from=input$dataInterval[1], to=input$dataInterval[2], 
                        ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-                       shape = "box", stacking = "dense")  
-
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-#                            phases_tr),
-#                          from=input$dataInterval[1], to=input$dataInterval[2], 
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                          shape = "box", stacking = "dense")  
-#       }
-#       else if (plots2show_bool[1] == TRUE && plots2show_bool[2] == TRUE && plots2show_bool[3] == FALSE) {
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]),
-#                            unlist(list_all_bg[input$groups]), 
-#                            phases_tr),
-#                          from=input$dataInterval[1], to=input$dataInterval[2], 
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                          shape = "box", stacking = "dense")  
-#       }
-#       else if (plots2show_bool[1] == TRUE && plots2show_bool[2] == TRUE && plots2show_bool[3] == TRUE) {
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]),
-#                            unlist(list_all_bg[input$groups]), 
-#                            phases_tr),
-#                          from=input$dataInterval[1], to=input$dataInterval[2], 
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                          shape = "box", stacking = "dense")  
-#       }
-#       else if (input$boxplot==FALSE && input$groups_plot==TRUE) {
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-#                            unlist(list_all_bg[input$groups]), groups_dt(), phases_tr),
-#                            from=input$dataInterval[1], to=input$dataInterval[2], 
-#                            ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                            shape = "box", stacking = "dense")
-#       }
-#       else if (input$boxplot==TRUE && input$groups_plot==FALSE) {
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-#                            unlist(list_all_bg[input$groups]), boxplot_dt(), phases_tr),
-#                          from=input$dataInterval[1], to=input$dataInterval[2], 
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                          shape = "box", stacking = "dense")
-#       }
-#       else {
-#         
-#         pt <- plotTracks(c(g_tr, list_all, list_all_bg, common_bedg_dt, boxplot_dt()), 
-#         pt <- plotTracks(c(g_tr, list_all, list_all_bg, groups_dt(), boxplot_dt()),
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt(), phases_tr),
-#       pt <- plotTracks(c(g_tr, list_all, o_tr),
-#                          from=pos(), to=pos() + input$windowsize,
-#                          from=input$tpos, to=input$tpos+ input$windowsize,
-#                          from=input$dataInterval[1], to=input$dataInterval[2],
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
-#                          shape = "box", stacking = "dense")
-#       }
-      
-#       return(pt)
+                       shape = "box", stacking = "dense")
       pt
     }
   })
@@ -569,82 +458,21 @@ shinyServer(function(input, output) {
     # extracting heatmap legend
     leg_heatmap <- g_legend (leg_heatmap_p)
   })
-  # Is the only way I find to save the plot, because once it is instanciated one time (all_plot)
-  # then can not be call a second time in the downloading expression
-#   dupl_plot <- reactive({
-    #     if(length(input$windowsize)==0){
-#     if(length(input$bedGraphRange)==0){
-#       return(NULL)
-#     }
-#     else{
-#       if (input$boxplot==FALSE){        
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), 
-#                            unlist(list_all_bg[input$groups]), groups_dt()),                      
-#                          from=input$dataInterval[1], to=input$dataInterval[2], 
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                          shape = "box", stacking = "dense")        
-#       }
-#       else {
-#         pt <- plotTracks(c(g_tr, unlist(l_gr_annotation_tr_bed[input$groups]), unlist(list_all_bg[input$groups]), groups_dt(), boxplot_dt()),                         
-#                          from=input$dataInterval[1], to=input$dataInterval[2],
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),
-#                          shape = "box", stacking = "dense")
-#       }
-# 
-#       pt
-#     }
-#   })
 
   output$plotbed <- renderPlot({
     all_plot()
-#     plot (1:5, 2:6)
-#     print(all_plot()) 
   })
+
   output$legend_track <- renderPlot({
     # empty plot 
     grid.newpage()
-      plot_empty <- ggplot(df_empty) + geom_point() + theme(panel.border = element_blank(), panel.background = element_blank())
-#     
-#     # adding group color legend
-#     grid.draw(leg_gr)
-#     
-#     # getting scale for heatmap
-    
-#     leg_heatmap <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
-#                               scale_fill_gradientn (guide = "colorbar",
-#                               colours = c(color_min, color_max),
-#                               values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-#                               limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-#                               breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-#                               labels = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-#                               name = "",
-#                               rescaler = function(x,...) x,                                        
-#                               oob = identity) + theme (legend.position = "none") + 
-#                               theme(legend.position="bottom", legend.justification=c(1,0)) + 
-#                               geom_blank()
-# #     
-#     # extracting heatmap legend
-# #     leg_heatmap <- g_legend (leg_heatmap)
+    plot_empty <- ggplot(df_empty) + 
+                  geom_point() + 
+                  theme(panel.border = element_blank(), panel.background = element_blank())
+
     grid.draw(leg_heatmap ())
-    grid.draw(leg_group ())
-#     p1 <- leg_heatmap ()
-#     p2 <- leg_group ()
-#     grid.arrange(p1, p2, heights = c(0.25, 2))
-                
+    grid.draw(leg_group ())                
   })
-  
-  # Download n_events plot
-#   output$all_plot_tiff <- downloadHandler(
-#     filename <- function() { paste('tracks_plot','tiff', sep="") },
-#     content <- function(file) {
-#       device <- function(width, height) grDevices::tiff(width = 10, height = 5)
-#       tiff(file)
-#       dupl_plot()
-#       dev.off()
-# #       ggsave (file, plot = all_plot(), width = 15, height = 10)
-#       
-#     },
-#     contentType = 'application/png'
 
 output$all_plot_tiff <- downloadHandler(
   filename <-  'tracks_plot.tiff' ,
@@ -657,83 +485,34 @@ output$all_plot_tiff <- downloadHandler(
     if(length(input$bedGraphRange)==0){
       return(NULL)
     }
-  else {
-    plots2show_bool <- avail_plots %in% input$plots2show
-    list_plots <- c(g_tr)
-    
-    if (plots2show_bool[1] == TRUE) {
-      list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+    else {
+      plots2show_bool <- avail_plots %in% input$plots2show
+      list_plots <- c(g_tr)
+      
+      if (plots2show_bool[1] == TRUE) {
+        list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+      }
+      
+      if (plots2show_bool[2] == TRUE) {
+        list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
+      }
+      
+      if (plots2show_bool[3] == TRUE) {
+        list_plots <- c(list_plots,  groups_dt())
+      }
+      
+      # phases if file present always show at the end
+      list_plots <- c(list_plots,  phases_tr) 
+      
+      pt <- plotTracks(list_plots,
+                       from=input$dataInterval[1], to=input$dataInterval[2], 
+                       ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+                       shape = "box", stacking = "dense")  
+      
+      pt
     }
     
-    if (plots2show_bool[2] == TRUE) {
-      list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
-    }
-    
-    if (plots2show_bool[3] == TRUE) {
-      list_plots <- c(list_plots,  groups_dt())
-    }
-    
-    # phases if file present always show at the end
-    list_plots <- c(list_plots,  phases_tr) 
-    
-    pt <- plotTracks(list_plots,
-                     from=input$dataInterval[1], to=input$dataInterval[2], 
-                     ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-                     shape = "box", stacking = "dense")  
-    
-    pt
-  }
     dev.off()
+  })
 })
 
-### second download
-# output$all_plot_tiff2 <- downloadHandler(
-#   filename <-  'tracks_plot2.tiff' ,
-#   content <- function(file) {
-#     ## TODO size should be link to the number of tracks in the rendering
-#     #     tiff(file)
-#     tiff(file, height = size_img(), width = size_img()/2, units = 'cm', res = 300)
-#     #     tiff(file, height=30, width = 16, units = 'cm', res=300)#height = 12, width = 17, units = 'cm'
-#             
-#     if(length(input$bedGraphRange)==0){
-#       return(NULL)
-#     }
-#     else {
-#       plots2show_bool <- avail_plots %in% input$plots2show
-#       list_plots <- c(g_tr)
-#       
-#       if (plots2show_bool[1] == TRUE) {
-#         list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
-#       }
-#       
-#       if (plots2show_bool[2] == TRUE) {
-#         list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
-#       }
-#       
-#       if (plots2show_bool[3] == TRUE) {
-#         list_plots <- c(list_plots,  groups_dt())
-#       }
-#       
-#       # phases if file present always show at the end
-#       list_plots <- c(list_plots,  phases_tr) 
-#       
-#       nrows <- 3
-#       ncols <- 3
-#       grid.newpage() 
-#       pushViewport(viewport(layout=grid.layout(nrows, ncols)))
-#       pushViewport(viewport(layout.pos.col=1:3, 
-#                             layout.pos.row=1:2))
-#       
-#       pt <- plotTracks(list_plots,
-#                        from=input$dataInterval[1], to=input$dataInterval[2], 
-#                        ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                        shape = "box", stacking = "dense")  
-#       
-# #       pt
-#       popViewport(1)
-#       
-#       print(leg_heatmap (), vp = viewport(layout.pos.row = 3, layout.pos.col = 1:3))
-#     }
-#     dev.off()
-#   })
-})
