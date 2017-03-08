@@ -387,36 +387,38 @@ shinyServer(function(input, output) {
       return(NULL)
     }
     else {
-      plots2show_bool <- avail_plots %in% input$plots2show
-      list_plots <- c(g_tr)
-      
-      # Appending the plots if selected
-      if (plots2show_bool[1] == TRUE) {
-        list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
-      }
-      
-      if (plots2show_bool[2] == TRUE) {
-        list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
-      }
+      withProgress(message = 'Rendering plot', style = 'notification', value = 0.1, {
+        plots2show_bool <- avail_plots %in% input$plots2show
+        list_plots <- c(g_tr)
+        incProgress(0.1)
+        # Appending the plots if selected
+        if (plots2show_bool[1] == TRUE) {
+          list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+        }
+        
+        if (plots2show_bool[2] == TRUE) {
+          list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
+        }
+    
+        if (plots2show_bool[3] == TRUE) {
+          list_plots <- c(list_plots,  groups_dt())
+        }
+        
+        # Load phases track when present 
+        # Always last plot
+        list_plots <- c(list_plots,  phases_tr) 
   
-      if (plots2show_bool[3] == TRUE) {
-        list_plots <- c(list_plots,  groups_dt())
-      }
-      
-      # Load phases track when present 
-      # Always last plot
-      list_plots <- c(list_plots,  phases_tr) 
-
-      pt <- plotTracks(list_plots,
-                       from=input$dataInterval[1], to=input$dataInterval[2], 
-                       ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-                       shape = "box", stacking = "dense")
-      pt
+        pt <- plotTracks(list_plots,
+                         from=input$dataInterval[1], to=input$dataInterval[2], 
+                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+                         shape = "box", stacking = "dense")
+        pt
+        incProgress(0.9)
+      }) 
     }
   })
   
   leg_group <- reactive ({
-    
     if(!is.null(input$groups)) {
       df_legend <- subset(df_legend, names %in% input$groups)
     }
@@ -460,7 +462,9 @@ shinyServer(function(input, output) {
   })
 
   output$plotbed <- renderPlot({
+    
     all_plot()
+    
   })
 
   output$legend_track <- renderPlot({
@@ -479,7 +483,7 @@ output$all_plot_tiff <- downloadHandler(
   content <- function(file) {
     ## TODO size should be link to the number of tracks in the rendering
 #     tiff(file)
-    tiff(file, height = size_img(), width = size_img()/2, units = 'cm', res = 300)
+    tiff(file, height = size_img(), width = size_img()*3/4, units = 'cm', res = 300)
 #     tiff(file, height=30, width = 16, units = 'cm', res=300)#height = 12, width = 17, units = 'cm'
     
     if(length(input$bedGraphRange)==0){
