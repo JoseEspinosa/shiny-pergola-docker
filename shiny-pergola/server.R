@@ -20,9 +20,8 @@ library (rtracklayer)
 library(ggplot2)
 library(grid)
 library (gridExtra)
-# library("cowplot")
 
-# line to be deleted only for loading library on crg ant
+## line to be deleted only for loading library on crg ant
 {
   if (file.exists("/users/cn/jespinosa")) {
     library ("Gviz", lib="/users/cn/jespinosa/R/library")
@@ -32,7 +31,7 @@ library (gridExtra)
   }
 }
 
-#Extract Legend 
+## Extract Legend 
 g_legend <- function(a.gplot){ 
   tmp <- ggplot_gtable(ggplot_build(a.gplot)) 
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
@@ -60,63 +59,58 @@ cb_palette <- c("#999999", "#E69F00", "#56B4E9",
                 "#D55E00", "#CC79A7", "#000000", 
                 "#00009B")
 
-# Avoid problems if user set many groups
+## Avoid problems if user set many groups
 cb_palette <- rep (cb_palette, 10) 
 
-# show legend
+## show legend
 leg_bool <- FALSE
 
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
-base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 # base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
+base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
 
-# Only for development
-# Setting folder when running container
+## Only for development
+## Setting folder when running container
 {
   if (file.exists("/usr/bin/shiny-server.sh")) {
     base_dir <- "/pergola_data"
   }
 }
 
-# data_dir <- dir(file.path(base_dir,"bed4test"))
-# data_dir <- file.path(base_dir,"bed4test")
-# data_dir <- file.path(base_dir, "GB_indidividual_files")
-# data_dir <- file.path(base_dir, "bed4test_all")
 data_dir <- file.path(base_dir, "files")
 
-# exp_design_f <- "exp_info_test.txt"
 exp_design_f <- "exp_info.txt"
 
 b2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
 
-{ if (length(exp_info$sample) != length(unique(exp_info$sample))) {
+{ 
+  if (length(exp_info$sample) != length(unique(exp_info$sample))) {
   stop ("Sample names duplicated in configuration file")}
 }
 
 perg_bed_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bed", sep="")))
 
-# s2c <- exp_info <- read.table(file.path(base_dir, "exp_info_test.txt"), header = TRUE, stringsAsFactors=FALSE)
-b2v <- dplyr::mutate(b2v, path = perg_bed_files)
-# s2c
+# exp_info <- read.table(file.path(base_dir, "exp_info.txt"), header = TRUE, stringsAsFactors=FALSE)
+b2v <- dplyr::mutate(b2v, path = perg_bed_files, header = TRUE, stringsAsFactors=FALSE)
+
 
 perg_bedg_files <- sapply(exp_info$sample, function(id) file.path(data_dir, paste(id, ".bedGraph", sep="")))
 
 bg2v <- exp_info <- read.table(file.path(base_dir, exp_design_f), header = TRUE, stringsAsFactors=FALSE)
 bg2v <- dplyr::mutate(bg2v, path = perg_bedg_files)
 
-# unique(exp_info$condition)
-# grps
 g_min_start <- 100000000
 g_max_end <- -100000000
 min_v <- 0
 max_v <- 0
 
 l_gr_color <- mapply(function(x, col) list(col),
-       unique(b2v$condition), cb_palette[1:length(unique(b2v$condition))])
+                     unique(b2v$condition), 
+                     cb_palette[1:length(unique(b2v$condition))])
 
 bed2pergViz <- function (data_df, gr_df, format_f="BED") {
   grps <- as.character(gr_df[[setdiff(colnames(gr_df), 'sample')]])
@@ -172,22 +166,7 @@ phases_file <- file.path(data_dir, "phases_dark.bed")
   }
 }
 
-# list_all <- list()
-# list_all
-# l_gr_annotation_tr_bed[c("case", "control")]
-
-# for (i in 1:length(l_gr_annotation_tr_bed)){
-#   list_gr <- lapply (l_gr_annotation_tr_bed[[i]], function (l, color=cb_palette[i]) { 
-#     displayPars(l) <- list(fill=color, background.title = color, col=NULL) # coll null for boxes lines
-#     return (l)
-#   })
-#   
-#   list_all <- append(list_all, list_gr)  
-# }
-
 l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph") 
-
-# names(l_granges_bg[[2]][1])
 
 l_gr_data_tr_bg_tmp <- lapply (seq_along(l_granges_bg), function (i_group_exp) {
         lapply (seq_along (l_granges_bg[[i_group_exp]]),  function (i_track) {                                                     
@@ -208,28 +187,6 @@ l_gr_data_tr_bg <-l_gr_data_tr_bg_tmp
 l_gr_annotation_tr_bg <- l_gr_data_tr_bg
 list_all_bg <- l_gr_data_tr_bg
 
-# setdiff(l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
-# subsetByOverlaps (l_gr_annotation_tr_bg[[1]][[1]], l_gr_annotation_tr_bg[[1]][[2]])
-# list_all_bg <- list()
-# group_lab <- c()
-# color_by_tr <- c()
-# for (i in 1:length(l_gr_annotation_tr_bg)){
-#   group_lab <- append(group_lab, rep (names(l_gr_annotation_tr_bg)[i], length(l_gr_annotation_tr_bg[[i]])))
-#   color_by_tr <- append(color_by_tr, cb_palette[i], length(l_gr_annotation_tr_bg[[i]]))
-#   
-#   for (j in 1:length(l_gr_annotation_tr_bg[[i]])){
-#     GR <- l_gr_annotation_tr_bg[[i]][[j]]
-# 
-#     id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (l_gr_annotation_tr_bg[[i]][j]))
-#     d_tr <- DataTrack(GR, name = id, background.title = cb_palette[i],
-#                       type="heatmap", ylim = c(0, 0.5),
-#                       gradient=c('color_min','color_max'))#, fill=col_ctrl, background.title = col_ctrl) 
-# 
-#     list_all_bg <- append (list_all_bg, d_tr)
-#   }
-#   
-# }
-
 l_all_common_int <- list() 
 common_intervals <- Reduce(subsetByOverlaps, c(unlist (l_granges_bg))) 
 
@@ -245,16 +202,6 @@ group_lab <- unlist(lapply (seq_along(l_granges_bg), function (i_group_exp) {
 group_lab <- factor(group_lab, levels = unique(group_lab))
 color_by_tr <- unlist(l_gr_color[unique(group_lab)])
 
-# for (i in 1:length(l_gr_annotation_tr_bg)){  
-#   l_gr_common_int <- sapply (l_gr_annotation_tr_bg[[i]], function (l, common_GR=common_intervals) { 
-#     mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
-#     return (mcol)
-# #     return (data.frame(mcol))
-#   })  
-# #   l_all_common_int <- cbind(l_all_common_int, l_gr_common_int)  
-#   l_all_common_int <- c(l_all_common_int, l_gr_common_int)  
-# }
-
 l_all_common_int <- sapply(unlist(l_gr_annotation_tr_bg), 
                            function (l, common_GR=common_intervals) { 
                             mcol <- mcols(subsetByOverlaps (l, common_intervals)) 
@@ -264,7 +211,7 @@ l_all_common_int <- sapply(unlist(l_gr_annotation_tr_bg),
 
 df_common_int <- as.data.frame (unlist(l_all_common_int))
 
-# This was not working problably because number of rows was not correctly set
+## This was not working problably because number of rows was not correctly set
 # df_common_int <- data.frame(matrix(unlist(l_all_common_int), nrow=length(common_intervals), byrow=T))
 # names(df_common_int) <- paste ("id_", gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg))), sep="")
 id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg)))
@@ -275,48 +222,12 @@ gr_common_intervals <- GRanges()
 gr_common_intervals <- common_intervals
 mcols(gr_common_intervals) <- df_common_int
 
-# gr_common_intervals[, which(group_lab=="control")]
-# common_bedg_dt <- DataTrack(gr_common_intervals, name = lab_group_plot, type = "a",
-#                                     showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-#                                     groups = group_lab, col = color_by_tr,
-#                                     background.title = col_back_title, size = tr_gr_size,
-#                                     legend = TRUE)
-### Way to use the same data track to plot the heatmap. 
-## order of tracks is reversed.
-# displayPars(common_bedg_dt) <- list(type=c("heatmap"), col= 'blue',gradient=c('color_min','color_max'), ylim = c(0, 0.5),
-#                                              background.title = col_back_title, cex.sampleNames = 0.4, legend=FALSE,
-#                                     cex.legend=0.4, fontsize.legend=0.1#,
-# #                                     groups = group_lab, col = color_by_tr
-#                                       
-#   )
-
-# plotTracks(common_bedg_dt)#comment
- 
-# common_bedg_dt_boxPlot <- DataTrack(gr_common_intervals, name = lab_group_plot, type="a",
-#                   showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-#                   groups = group_lab, col=color_by_tr,
-#                   legend=FALSE)
-
 g_tr <- GenomeAxisTrack()
 x <- runif(length(l_gr_color),0,100)
 y <-runif(length(l_gr_color),100,200)
 
-# names <- names(l_gr_color)
-# names
 df_legend <- data.frame(x, y, unique(group_lab))
 colnames(df_legend) <- c("x", "y", "names")
-# fake_legend <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
-# #                ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
-#                           scale_fill_manual (values=cb_palette) + guides(color=guide_legend(title=NULL)) + 
-# #                           theme(legend.position="bottom", legend.justification=c(0,1))
-#                           theme(legend.position="bottom", legend.justification=c(0,1)) + geom_blank()
-# group_lab <- factor(group_lab, levels = unique(group_lab))
-# color_by_tr <- unlist(l_gr_color[unique(group_lab)])
-# fake_legend
-
-# fake_legend
-# # el problema esta aqui
-# leg_gr <- g_legend(fake_legend) 
 
 df_empty <- data.frame()
 
@@ -331,10 +242,10 @@ shinyServer(function(input, output) {
     sliderInput("dataInterval", label = h4("Data interval:"), 
                 min = min(g_min_start, 1000), 
                 max = max(g_max_end, 1000000), 
-                value = c(min(g_min_start, 1000), 
-                          g_min_start + 10000), 
-                step= 1000)
-#                 value = c(1, 3628800), step= 1000)#del
+#                 value = c(min(g_min_start, 1000), 
+#                           g_min_start + 10000), 
+#                 step= 1000)
+                value = c(1, 3628800), step= 1000) #del 
   }) 
   output$plots2show_tab <- renderUI({
     checkboxGroupInput( "plots2show", label = h4("Plots to display:"),
@@ -342,8 +253,8 @@ shinyServer(function(input, output) {
                                     "Heatmap" = avail_plots[2], 
                                     "Groups mean" = avail_plots[3] ), 
 #                         selected = avail_plots[1])
-#                         selected = avail_plots)
-                        selected = avail_plots[1:2])
+                        selected = avail_plots) #del
+#                         selected = avail_plots[1:2])
   })
   output$groups_tab <- renderUI({
     checkboxGroupInput( "groups", label = h4("Groups to render:"), 
@@ -457,7 +368,7 @@ shinyServer(function(input, output) {
                             oob = identity) + theme (legend.position = "none") + 
                             theme(legend.position="bottom", legend.justification=c(1,0)) + geom_blank() 
     }
-    # extracting heatmap legend
+    ## extracting heatmap legend
     leg_heatmap <- g_legend (leg_heatmap_p)
   })
 
@@ -468,7 +379,7 @@ shinyServer(function(input, output) {
   })
 
   output$legend_track <- renderPlot({
-    # empty plot 
+    ## empty plot 
     grid.newpage()
     plot_empty <- ggplot(df_empty) + 
                   geom_point() + 
@@ -505,7 +416,7 @@ output$all_plot_tiff <- downloadHandler(
         list_plots <- c(list_plots,  groups_dt())
       }
       
-      # phases if file present always show at the end
+      ## phases if the file is present in the folder always show at the end
       list_plots <- c(list_plots,  phases_tr) 
       
       pt <- plotTracks(list_plots,
