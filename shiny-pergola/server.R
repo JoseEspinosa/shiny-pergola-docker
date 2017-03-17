@@ -213,9 +213,11 @@ l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph")
     #     max_data_int <- g_min_start + 10000
     min_data_int <- 0
     max_data_int <- 600
-    min_heatmap <- 0
-    max_heatmap <- 0.5
-    def_avail_plots <- avail_plots[1:2]
+    min_heatmap <- -50
+    max_heatmap <- 50
+    min_v <- -50
+    max_v <- 50
+    def_avail_plots <- avail_plots[2]
   }
 }
 
