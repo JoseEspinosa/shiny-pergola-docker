@@ -70,8 +70,8 @@ leg_bool <- FALSE
 # base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/Users/jespinosa/2017_tests_pergola_paper"
-
-base_dir <- "/pergola_data"
+base_dir <- "/Users/jespinosa/2017_EEG_ERP_marcos/result"
+# base_dir <- "/pergola_data"
 
 ## Only for development
 ## Setting folder when running container
@@ -209,8 +209,10 @@ l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph")
     
   }
   else {
-    min_data_int <- min(g_min_start, 1000)
-    max_data_int <- g_min_start + 10000
+    #     min_data_int <- min(g_min_start, 1000)
+    #     max_data_int <- g_min_start + 10000
+    min_data_int <- 0
+    max_data_int <- 600
     min_heatmap <- 0
     max_heatmap <- 0.5
     def_avail_plots <- avail_plots[1:2]
@@ -225,7 +227,8 @@ l_gr_data_tr_bg_tmp <- lapply (seq_along(l_granges_bg), function (i_group_exp) {
     d_track <- DataTrack(granges_obj,
                          type="heatmap", ylim = c(min_heatmap, max_heatmap),
                          background.title = l_gr_color[[i_group_exp]],
-                         gradient=c(color_min, color_max), 
+                         #                                                                 gradient=c(color_min, color_max), 
+                         gradient=c("orange", color_min, color_max), 
                          showAxis = F, name = id)
     return (d_track)
   })
@@ -282,7 +285,7 @@ df_empty <- data.frame()
 
 shinyServer(function(input, output) {
   output$bedGraphRange_tab <- renderUI({
-    sliderInput("bedGraphRange", label = h4("Data range:"), 
+    sliderInput("bedGraphRange", label = h4("Range bedgraph:"), 
                 min = min_v, max = max_v, 
                 value = c(min_heatmap, max_heatmap), 
                 step= 0.1)
@@ -393,8 +396,8 @@ shinyServer(function(input, output) {
     if(length(input$bedGraphRange)==0){
       leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
         scale_fill_gradientn (guide = "colorbar",
-                              colours = c(color_min, color_max),
-                              values = c(min_heatmap , max_heatmap),
+                              colours = c("orange", color_min, color_min, color_max),
+                              values = c(min_heatmap,0, 0, max_heatmap),
                               limits = c(min_heatmap, max_heatmap),
                               breaks   = c(min_heatmap, max_heatmap),
                               labels = c(min_heatmap, paste(max_heatmap,"     ", sep="")),
@@ -406,8 +409,10 @@ shinyServer(function(input, output) {
     else {
       leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
         scale_fill_gradientn (guide = "colorbar",
-                              colours = c(color_min, color_max),
-                              values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                              #                             colours = c(color_min, color_max),
+                              colours = c("orange", color_min, color_min, color_max),
+                              #                             values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                              values = c(input$bedGraphRange[1],0,0, input$bedGraphRange[2]),
                               limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
                               breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
                               labels = c(input$bedGraphRange[1], paste(input$bedGraphRange[2],"    ", sep="")),
@@ -478,3 +483,4 @@ shinyServer(function(input, output) {
       dev.off()
     })
 })
+
