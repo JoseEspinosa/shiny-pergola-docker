@@ -69,7 +69,7 @@ leg_bool <- FALSE
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 # base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
-
+base_dir <- "/pergola_data"
 
 ## Only for development
 ## Setting folder when running container
@@ -168,6 +168,7 @@ l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph")
 
 g_min_data = min(g_min_start, 1000)
 g_max_data = max(g_max_end, 1000000)
+step_dataInt <- 1000
 
 ## IDs for exactly reproduce paper figures
 {
@@ -298,7 +299,7 @@ shinyServer(function(input, output) {
                 #                           3628800), #del # 42 days 6 weeks 
                 #                 value = c(1555200, 2160000), # 
                 value = c(min_data_int, max_data_int),
-                step= 1000) 
+                step= step_dataInt) 
   }) 
   output$plots2show_tab <- renderUI({
     checkboxGroupInput( "plots2show", label = h4("Plots to display:"),
