@@ -282,7 +282,7 @@ df_empty <- data.frame()
 
 shinyServer(function(input, output) {
   output$bedGraphRange_tab <- renderUI({
-    sliderInput("bedGraphRange", label = h4("Range bedgraph:"), 
+    sliderInput("bedGraphRange", label = h4("Data range:"), 
                 min = min_v, max = max_v, 
                 value = c(min_heatmap, max_heatmap), 
                 step= 0.1)
