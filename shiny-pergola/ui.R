@@ -46,7 +46,7 @@ shinyUI(
                  fluidRow(                  
                   column(12,
                            plotOutput("plotbed", height=800),
-                           plotOutput("legend_track", height=50),
+                           plotOutput("legend_track", height=100),
                            plotOutput("envInfo", height=20))#,
 #                            textOutput("text1")
                         ),

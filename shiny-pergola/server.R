@@ -237,7 +237,7 @@ l_gr_data_tr_bg_tmp <- lapply (seq_along(l_granges_bg), function (i_group_exp) {
                          type="heatmap", ylim = c(min_heatmap, max_heatmap),
                          background.title = l_gr_color[[i_group_exp]],
                          #                                                                 gradient=c(color_min, color_max), 
-                         gradient=c("orange", color_min, color_max), 
+                         gradient=c(color_max, color_min, "orange"), 
                          showAxis = F, name = id)
     return (d_track)
   })
@@ -313,7 +313,7 @@ shinyServer(function(input, output) {
   }) 
   output$plots2show_tab <- renderUI({
     checkboxGroupInput( "plots2show", label = h4("Plots to display:"),
-                        choices = c("Intervals" = avail_plots[1], 
+                        choices = c(#"Intervals" = avail_plots[1], 
                                     "Heatmap" = avail_plots[2], 
                                     "Groups mean" = avail_plots[3] ), 
                         selected = def_avail_plots)
@@ -365,9 +365,9 @@ shinyServer(function(input, output) {
         list_plots <- c(g_tr)
         incProgress(0.1)
         # Appending the plots if selected
-        if (plots2show_bool[1] == TRUE) {
-          list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
-        }
+#         if (plots2show_bool[1] == TRUE) {
+#           list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+#         }
         
         if (plots2show_bool[2] == TRUE) {
           list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
@@ -407,7 +407,7 @@ shinyServer(function(input, output) {
     if(length(input$bedGraphRange)==0){
       leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
         scale_fill_gradientn (guide = "colorbar",
-                              colours = c("orange", color_min, color_min, color_max),
+                              colours = c(color_max, color_min, color_min, "orange"),
                               values = c(min_heatmap,0, 0, max_heatmap),
                               limits = c(min_heatmap, max_heatmap),
                               breaks   = c(min_heatmap, max_heatmap),
@@ -421,7 +421,7 @@ shinyServer(function(input, output) {
       leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
         scale_fill_gradientn (guide = "colorbar",
                               #                             colours = c(color_min, color_max),
-                              colours = c("orange", color_min, color_min, color_max),
+                              colours = c(color_max, color_min, color_min, "orange"),
                               #                             values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
                               values = c(input$bedGraphRange[1],0,0, input$bedGraphRange[2]),
                               limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
@@ -468,9 +468,9 @@ shinyServer(function(input, output) {
         plots2show_bool <- avail_plots %in% input$plots2show
         list_plots <- c(g_tr)
         
-        if (plots2show_bool[1] == TRUE) {
-          list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
-        }
+#         if (plots2show_bool[1] == TRUE) {
+#           list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+#         }
         
         if (plots2show_bool[2] == TRUE) {
           list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
