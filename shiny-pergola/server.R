@@ -168,6 +168,13 @@ l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph")
   }
 }
 
+g_min_data <- min(g_min_start, 1000)
+g_max_data <- max(g_max_end, 1000000)
+g_min_data <- 1
+g_max_data <- 600
+step_dataInt <- 1000
+step_dataInt <- 1 
+
 ## IDs for exactly reproduce paper figures
 {
   if (file.exists(file.path(base_dir, "id.txt"))) {
@@ -294,13 +301,15 @@ shinyServer(function(input, output) {
   })
   output$dataInterval_tab <- renderUI({
     sliderInput("dataInterval", label = h4("Data interval:"), 
-                min = min(g_min_start, 1000), 
-                max = max(g_max_end, 1000000),
+#                 min = min(g_min_start, 1000), 
+#                 max = max(g_max_end, 1000000),
+                min = g_min_data,
+                max = g_max_data,
                 #                           g_min_start + 10000), 
                 #                           3628800), #del # 42 days 6 weeks 
                 #                 value = c(1555200, 2160000), # 
                 value = c(min_data_int, max_data_int),
-                step= 1000) 
+                step= step_dataInt) 
   }) 
   output$plots2show_tab <- renderUI({
     checkboxGroupInput( "plots2show", label = h4("Plots to display:"),
