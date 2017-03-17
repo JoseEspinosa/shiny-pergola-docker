@@ -69,9 +69,7 @@ leg_bool <- FALSE
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
 # base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
-# base_dir <- "/Users/jespinosa/2017_tests_pergola_paper"
 
-base_dir <- "/pergola_data"
 
 ## Only for development
 ## Setting folder when running container
@@ -167,6 +165,9 @@ l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph")
     phases_tr <- NULL
   }
 }
+
+g_min_data = min(g_min_start, 1000)
+g_max_data = max(g_max_end, 1000000)
 
 ## IDs for exactly reproduce paper figures
 {
@@ -289,8 +290,10 @@ shinyServer(function(input, output) {
   })
   output$dataInterval_tab <- renderUI({
     sliderInput("dataInterval", label = h4("Data interval:"), 
-                min = min(g_min_start, 1000), 
-                max = max(g_max_end, 1000000),
+#                 min = min(g_min_start, 1000),                 
+#                 max = max(g_max_end, 1000000),
+                min = g_min_data,
+                max = g_max_data,
                 #                           g_min_start + 10000), 
                 #                           3628800), #del # 42 days 6 weeks 
                 #                 value = c(1555200, 2160000), # 
