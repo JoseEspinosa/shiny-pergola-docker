@@ -4,12 +4,7 @@
 ### Shiny app to show pergola data using Gviz                                            ###
 ### server.R                                                                             ###
 ############################################################################################
-### TODO                                                                                 ###
-### Benchmark using system.time, benchmark library                                       ###
-### Try to load plots at the beginning less time                                         ### 
-### Generate bedgraph files like bed files and and object with all the bedGraph files    ###
-### like know for the group plot                                                         ###
-############################################################################################
+
 # local installation of the library
 # devtools::with_libpaths(new ="/users/cn/jespinosa/R/library", devtools::install_github("JoseEspinosa/Gviz"))
 
@@ -63,16 +58,10 @@ cb_palette <- rep (cb_palette, 10)
 ## show legend
 leg_bool <- FALSE
 
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
-# base_dir <- "/Users/jespinosa/2017_tests_pergola_paper"
 # base_dir <- "/Users/jespinosa/2017_EEG_ERP_marcos/result_correct"
-base_dir <- "/Users/jespinosa/2017_EEG_ERP_marcos/result_wrong"
-# base_dir <- "/pergola_data"
+# base_dir <- "/Users/jespinosa/2017_EEG_ERP_marcos/result_wrong"
+# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/eeg/result_correct" # ant-login
+base_dir <- "/users/cn/jespinosa/shiny_pergola_data/eeg/result_wrong" # ant-login
 
 ## Only for development
 ## Setting folder when running container
@@ -345,11 +334,6 @@ shinyServer(function(input, output) {
     common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = input$type_gr_plot,
                                 showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
                                 groups = group_lab[group_lab %in% input$groups], col = color_by_tr,
-                                background.title = col_back_title, #size = tr_gr_size,
-                                legend = leg_bool)
-    common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = "heatmap",
-                                showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
-                                 col = color_by_tr,
                                 background.title = col_back_title, #size = tr_gr_size,
                                 legend = leg_bool)
 
