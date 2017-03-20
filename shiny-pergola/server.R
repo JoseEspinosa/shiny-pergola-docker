@@ -70,7 +70,8 @@ leg_bool <- FALSE
 # base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/Users/jespinosa/2017_tests_pergola_paper"
-base_dir <- "/Users/jespinosa/2017_EEG_ERP_marcos/result"
+# base_dir <- "/Users/jespinosa/2017_EEG_ERP_marcos/result_correct"
+base_dir <- "/Users/jespinosa/2017_EEG_ERP_marcos/result_wrong"
 # base_dir <- "/pergola_data"
 
 ## Only for development
@@ -346,7 +347,12 @@ shinyServer(function(input, output) {
                                 groups = group_lab[group_lab %in% input$groups], col = color_by_tr,
                                 background.title = col_back_title, #size = tr_gr_size,
                                 legend = leg_bool)
-    
+    common_bedg_dt <- DataTrack(gr_common_intervals_subset, name = lab_group_plot, type = "heatmap",
+                                showSampleNames = TRUE, #ylim = c(0, 0.5),                                     
+                                 col = color_by_tr,
+                                background.title = col_back_title, #size = tr_gr_size,
+                                legend = leg_bool)
+
     common_bedg_dt
   })
   
@@ -380,7 +386,14 @@ shinyServer(function(input, output) {
         # Load phases track when present 
         # Always last plot
         list_plots <- c(list_plots,  phases_tr) 
-        
+#         h_tr <-HighlightTrack(trackList = list_plots, start = c(1,100,200), width = 100) #, inBackground=F, fill=NA)#, 'alpha' = 0.2)
+# HighlightTrack(trackList = list(atrack, grtrack,
+#                                 +     dtrack), start = c(26705000, 26720000), width = 7000,
+#                +     chromosome = 7)        
+# pt <- plotTracks(c(g_tr, h_tr),
+#                          from=input$dataInterval[1], to=input$dataInterval[2], 
+#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+#                          shape = "box", stacking = "dense")
         pt <- plotTracks(list_plots,
                          from=input$dataInterval[1], to=input$dataInterval[2], 
                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
