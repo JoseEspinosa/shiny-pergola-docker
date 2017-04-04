@@ -66,10 +66,11 @@ leg_bool <- FALSE
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc/files_test_dyrk1a"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
+base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
-base_dir <- "/pergola_data"
+# base_dir <- "/pergola_data"
 
 ## Only for development
 ## Setting folder when running container
@@ -311,7 +312,8 @@ shinyServer(function(input, output) {
   output$groups_tab <- renderUI({
     checkboxGroupInput( "groups", label = h4("Groups to render:"), 
                         choices = unique(group_lab), 
-                        selected=unique(group_lab))
+#                         selected=unique(group_lab))
+                        selected=c("FC_food_sc_wt_dyrk", "FC_food_cd_wt_dyrk", "FC_food_sc_dyrk", "FC_food_cd_dyrk"))
   })
   output$type_gr_plot_tab <- renderUI({
     if (!"plot_gr" %in% input$plots2show) {
@@ -453,30 +455,59 @@ shinyServer(function(input, output) {
         return(NULL)
       }
       else {
-        plots2show_bool <- avail_plots %in% input$plots2show
-        list_plots <- c(g_tr)
-        
-        if (plots2show_bool[1] == TRUE) {
-          list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
-        }
-        
-        if (plots2show_bool[2] == TRUE) {
-          list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
-        }
-        
-        if (plots2show_bool[3] == TRUE) {
-          list_plots <- c(list_plots,  groups_dt())
-        }
-        
-        ## phases if the file is present in the folder always show at the end
-        list_plots <- c(list_plots,  phases_tr) 
-        
-        pt <- plotTracks(list_plots,
-                         from=input$dataInterval[1], to=input$dataInterval[2], 
-                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-                         shape = "box", stacking = "dense")  
-        
-        pt
+          
+          plots2show_bool <- avail_plots %in% input$plots2show
+          list_plots <- c(g_tr)
+          
+          # Appending the plots if selected
+          if (plots2show_bool[1] == TRUE) {
+              list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+          }
+          
+          if (plots2show_bool[2] == TRUE) {
+              list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
+          }
+          
+          if (plots2show_bool[3] == TRUE) {
+              list_plots <- c(list_plots,  groups_dt())
+          }
+          
+          # Load phases track when present 
+          # Always last plot
+          list_plots <- c(list_plots,  phases_tr) 
+          
+          pt <- plotTracks(list_plots,
+                           from=input$dataInterval[1], to=input$dataInterval[2], 
+                           ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+                           shape = "box", stacking = "dense")
+          pt 
+          
+          
+          
+#         plots2show_bool <- avail_plots %in% input$plots2show
+#         list_plots <- c(g_tr)
+#         
+#         if (plots2show_bool[1] == TRUE) {
+#           list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
+#         }
+#         
+#         if (plots2show_bool[2] == TRUE) {
+#           list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
+#         }
+#         
+#         if (plots2show_bool[3] == TRUE) {
+#           list_plots <- c(list_plots,  groups_dt())
+#         }
+#         
+#         ## phases if the file is present in the folder always show at the end
+#         list_plots <- c(list_plots,  phases_tr) 
+#         
+#         pt <- plotTracks(list_plots,
+#                          from=input$dataInterval[1], to=input$dataInterval[2], 
+#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
+#                          shape = "box", stacking = "dense")  
+#         
+#         pt
       }
       
       dev.off()
