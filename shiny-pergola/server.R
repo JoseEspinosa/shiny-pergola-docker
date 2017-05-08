@@ -68,9 +68,11 @@ leg_bool <- FALSE
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc/files_test_dyrk1a"
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
+# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
 # base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
 # base_dir <- "/pergola_data"
+# base_dir <- "/Users/jespinosa/2017_phecomp_marta/GB_indidividual_files_forced_to_move" # hf forced
+base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_hf_forced" #crg
 
 ## Only for development
 ## Setting folder when running container
@@ -312,8 +314,8 @@ shinyServer(function(input, output) {
   output$groups_tab <- renderUI({
     checkboxGroupInput( "groups", label = h4("Groups to render:"), 
                         choices = unique(group_lab), 
-#                         selected=unique(group_lab))
-                        selected=c("FC_food_sc_wt_dyrk", "FC_food_cd_wt_dyrk", "FC_food_sc_dyrk", "FC_food_cd_dyrk"))
+                        selected=unique(group_lab))
+#                         selected=c("FC_food_sc_wt_dyrk", "FC_food_cd_wt_dyrk", "FC_food_sc_dyrk", "FC_food_cd_dyrk"))
   })
   output$type_gr_plot_tab <- renderUI({
     if (!"plot_gr" %in% input$plots2show) {
