@@ -63,24 +63,7 @@ cb_palette <- rep (cb_palette, 10)
 ## show legend
 leg_bool <- FALSE
 
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/worm_data"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/ts_choc/files_test_dyrk1a"
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-# base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_choc" #crg
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/mice_nicotine"
-# base_dir <- "/pergola_data"
-# base_dir <- "/Users/jespinosa/2017_phecomp_marta/GB_indidividual_files_forced_to_move" # hf forced
-base_dir <- "/users/cn/jespinosa/shiny_pergola_data/ts_hf_forced" #crg
-
-## Only for development
-## Setting folder when running container
-{
-  if (file.exists("/usr/bin/shiny-server.sh")) {
-    base_dir <- "/pergola_data"
-  }
-}
+base_dir <- "/pergola_data"
 
 data_dir <- file.path(base_dir, "files")
 

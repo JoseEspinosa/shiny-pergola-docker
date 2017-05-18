@@ -28,5 +28,5 @@ RUN wget --no-verbose https://s3.amazonaws.com/rstudio-shiny-server-os-build/ubu
 RUN R -e "install.packages(c('shiny', 'rmarkdown', 'ggplot2', 'XML', 'Rcurl','cowplot', 'dplyr', 'survival', 'gridExtra', 'devtools'), repos='http://cran.rstudio.com/')" \
 && Rscript -e 'source("http://bioconductor.org/biocLite.R"); biocLite("GenomicRanges"); biocLite("rtracklayer");'
 
-# version of Gviz modified to show time instead of genomics units 
+## version of Gviz modified to show time instead of genomics units 
 RUN R -e  'devtools::install_github("JoseEspinosa/Gviz")'
