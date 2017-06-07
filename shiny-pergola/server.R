@@ -9,6 +9,7 @@
 ### Try to load plots at the beginning less time                                         ### 
 ### Generate bedgraph files like bed files and and object with all the bedGraph files    ###
 ### like know for the group plot                                                         ###
+### Show by default 10 % of the time in the input data                                  ###
 ############################################################################################
 # local installation of the library
 # devtools::with_libpaths(new ="/users/cn/jespinosa/R/library", devtools::install_github("JoseEspinosa/Gviz"))
@@ -62,9 +63,9 @@ cb_palette <- rep (cb_palette, 10)
 
 ## show legend
 leg_bool <- FALSE
+size_text_leg <- 14
 
 base_dir <- "/pergola_data"
-
 data_dir <- file.path(base_dir, "files")
 
 exp_design_f <- "exp_info.txt"
@@ -143,8 +144,8 @@ l_granges_bg <- bed2pergViz (bg2v, exp_info, "bedGraph")
 { 
   if(file.exists(phases_file)) {
     bed_phases <- import(phases_file, format = "BED")
-    phases_tr <- AnnotationTrack(bed_phases, #name = paste ("", name_phases_tr, sep=""),
-                                 fill = phases_color, #rotation.title=1, #cex.sampleNames = 0.1, #size = tr_phase_size,
+    phases_tr <- AnnotationTrack(bed_phases, name = paste ("", name_phases_tr, sep=""),
+                                 fill = phases_color, #rotation.title=1, #cex.sampleNames = 0.1, #size = tr_phase_size,                                
                                  background.title = col_back_title, col=NULL)    
   }
   else {
@@ -254,20 +255,39 @@ df_common_int <- as.data.frame (unlist(l_all_common_int))
 id <- gsub(".+tr_(\\d+)(_.+$)", "\\1", names (unlist(l_gr_annotation_tr_bg)))
 data_type <- gsub(".+tr_(\\d+)_dt_(\\w+._.+$)", "\\2", names (unlist(l_gr_annotation_tr_bg)))
 names(df_common_int) <- paste ("id", id, data_type, sep="_")
-
+                               
 gr_common_intervals <- GRanges()
 gr_common_intervals <- common_intervals
 mcols(gr_common_intervals) <- df_common_int
 
 g_tr <- GenomeAxisTrack()
 x <- runif(length(l_gr_color),0,100)
-y <-runif(length(l_gr_color),100,200)
+y <- runif(length(l_gr_color),100,200)
 
 df_legend <- data.frame(x, y, unique(group_lab))
 colnames(df_legend) <- c("x", "y", "names")
 
 df_empty <- data.frame()
 
+n_tracks <- length(exp_info$sample)
+
+v_size_font <- switch(as.character(round(n_tracks/10)),
+                      "0"=c(20,0.5),
+                      "1"=c(20,0.6),
+                      "2"=c(18,0.6),
+                      "3"=c(12,0.7),
+                      "4"=c(6,1),
+                      "5"=c(6,1),
+                      "6"=c(6,1),
+                      "7"=c(6,1),
+                      "8"=c(6,1),
+                      "9"=c(6,1),
+                      "10"=c(6,1),
+                      c(12,0.7))
+
+size_labels <- v_size_font [1]
+cex_gtrack <- v_size_font [2]
+  
 shinyServer(function(input, output) {
   output$bedGraphRange_tab <- renderUI({
     sliderInput("bedGraphRange", label = h4("Data range:"), 
@@ -360,55 +380,45 @@ shinyServer(function(input, output) {
         
         pt <- plotTracks(list_plots,
                          from=input$dataInterval[1], to=input$dataInterval[2], 
-                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-                         shape = "box", stacking = "dense")
+                         ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                     
+                         shape = "box", stacking = "dense", fontsize=size_labels, cex=cex_gtrack)
         pt
         incProgress(0.9)
       }) 
     }
   })
-  
-  leg_group <- reactive ({
-    if(!is.null(input$groups)) {
-      df_legend <- subset(df_legend, names %in% input$groups)
-    }
-    
-    gr_legend_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
-      scale_colour_manual (values=color_by_tr) + guides(color=guide_legend(title=NULL)) + 
-      theme(legend.position="bottom", legend.justification=c(0, 1)) + geom_blank()
-    
-    leg_gr <- g_legend (gr_legend_p)
-  })
-  
-  leg_heatmap <- reactive({
-    if(length(input$bedGraphRange)==0){
-      leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
-        scale_fill_gradientn (guide = "colorbar",
-                              colours = c(color_min, color_max),
-                              values = c(min_heatmap , max_heatmap),
-                              limits = c(min_heatmap, max_heatmap),
-                              breaks   = c(min_heatmap, max_heatmap),
-                              labels = c(min_heatmap, paste(max_heatmap,"     ", sep="")),
-                              name = "",
-                              rescaler = function(x,...) x,                                        
-                              oob = identity) + theme (legend.position = "none") + 
-        theme(legend.position="bottom", legend.justification=c(1,0)) + geom_blank() 
-    }
-    else {
-      leg_heatmap_p <- ggplot() + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
-        scale_fill_gradientn (guide = "colorbar",
-                              colours = c(color_min, color_max),
-                              values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                              limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                              breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
-                              labels = c(input$bedGraphRange[1], paste(input$bedGraphRange[2],"    ", sep="")),
-                              name = "",
-                              rescaler = function(x,...) x,                                        
-                              oob = identity) + theme (legend.position = "none") + 
-        theme(legend.position="bottom", legend.justification=c(1,0)) + geom_blank() 
-    }
-    ## extracting heatmap legend
-    leg_heatmap <- g_legend (leg_heatmap_p)
+
+  legend_joined <- reactive ({
+   
+      plots2show_bool <- avail_plots %in% input$plots2show
+      
+      plot_legends <- plot_empty <- ggplot(df_empty) + 
+                      geom_point() + 
+                      theme(panel.border = element_blank(), panel.background = element_blank())
+                  
+      # Appending the legends plots if selected
+      if (plots2show_bool[1] == TRUE || plots2show_bool[3] == TRUE) {
+        plot_legends <- plot_legends + geom_point(data=df_legend, aes(x=x, y=y, colour = names), shape=15, size=5) +
+          scale_colour_manual (values=color_by_tr) + guides(color=guide_legend(title=NULL)) + 
+          theme(legend.position="bottom", legend.justification=c(1, 0), legend.text=element_text(size=size_text_leg),
+                legend.key = element_rect(fill = "white", colour = "white")) + geom_blank()
+      }
+      
+      if (plots2show_bool[2] == TRUE) {
+        plot_legends <- plot_legends + geom_point(data=df_legend, aes(x=x, y=y, fill = 0)) +
+          scale_fill_gradientn (guide = "colorbar",
+                                colours = c(color_min, color_max),
+                                values = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                                limits = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                                breaks   = c(input$bedGraphRange[1], input$bedGraphRange[2]),
+                                labels = c(input$bedGraphRange[1], paste(input$bedGraphRange[2],"    ", sep="")),
+                                name = "",
+                                rescaler = function(x,...) x,                                        
+                                oob = identity) + theme (legend.position = "none") + 
+          theme(legend.position="bottom", legend.justification=c(1,0), legend.text=element_text(size=size_text_leg)) +
+          geom_blank()  
+      }
+      legend_joined <- g_legend (plot_legends)
   })
   
   output$plotbed <- renderPlot({
@@ -424,8 +434,11 @@ shinyServer(function(input, output) {
       geom_point() + 
       theme(panel.border = element_blank(), panel.background = element_blank())
     
-    grid.draw(leg_heatmap ())
-    grid.draw(leg_group ())                
+#     grid.draw(leg_heatmap ())
+#     grid.draw(leg_group ())
+    if (!is.null(input$plots2show)) {
+      grid.draw(legend_joined())
+    }
   })
   
   output$all_plot_tiff <- downloadHandler(
@@ -464,7 +477,7 @@ shinyServer(function(input, output) {
           pt <- plotTracks(list_plots,
                            from=input$dataInterval[1], to=input$dataInterval[2], 
                            ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-                           shape = "box", stacking = "dense")
+                           shape = "box", stacking = "dense", fontsize=size_labels, cex=cex_gtrack)
           pt 
           
           
