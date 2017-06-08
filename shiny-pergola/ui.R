@@ -5,8 +5,9 @@
 ### ui.R                                                                                 ###
 ############################################################################################
 ### TODO                                                                                 ###
-### Change color scheme with a color blind friendly scheme, some ideas here:             ###
-### http://www.cookbook-r.com/Graphs/Colors_%28ggplot2%29/#a-colorblind-friendly-palette ###
+### Create a nicer graphical interface                                                   ###
+### Inspiration to avoid remaking until change is final in reactive                      ###
+### https://stackoverflow.com/questions/31051133/how-do-i-make-sure-that-a-shiny-reactive-plot-only-changes-once-all-other-reacti
 ############################################################################################
 
 # Running the app
@@ -35,9 +36,14 @@ shinyUI(
                        uiOutput("groups_tab"),
                        uiOutput("type_gr_plot_tab")
       ),
-            conditionalPanel(condition="input.tabs_p=='About'",
-                             h4("Introduction") 
-            )
+      conditionalPanel(condition="input.tabs_p=='About'",
+                       h4("Links"),                      
+                       helpText(a("Get Shiny-Pergola source code on GitHub!", 
+                                  href = "https://github.com/JoseEspinosa/shiny-pergola-docker", 
+                                  target = "_blank")),
+                        helpText(a("Pergola documentation", 
+                                 href = "http://cbcrg.github.io/pergola/", target = "_blank"))                               
+      ), width = 3
     ),
     
     mainPanel(
@@ -53,7 +59,11 @@ shinyUI(
                   column(3, downloadButton("all_plot_tiff", "Download snapshot"))#,
                 ),            
         tabPanel("About",
-                 HTML('<p>Pergola</p>')),
+                 HTML('<h4>Introduction</h4> 
+                      <p>Shiny-Pergola is a Shiny application for the visualization of longitudinal 
+                      behavioral data. Behavioral data should be first be processed using Pergola. 
+                      Once data has been processed you can render it using a configuration file as
+                      explained here.</p>')),
         
         id="tabs_p"
         

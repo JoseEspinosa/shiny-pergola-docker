@@ -7,9 +7,6 @@
 ### TODO                                                                                 ###
 ### Benchmark using system.time, benchmark library                                       ###
 ### Try to load plots at the beginning less time                                         ### 
-### Generate bedgraph files like bed files and and object with all the bedGraph files    ###
-### like know for the group plot                                                         ###
-### Show by default 10 % of the time in the input data                                  ###
 ############################################################################################
 # local installation of the library
 # devtools::with_libpaths(new ="/users/cn/jespinosa/R/library", devtools::install_github("JoseEspinosa/Gviz"))
@@ -66,6 +63,7 @@ leg_bool <- FALSE
 size_text_leg <- 14
 
 base_dir <- "/pergola_data"
+
 data_dir <- file.path(base_dir, "files")
 
 exp_design_f <- "exp_info.txt"
@@ -157,6 +155,11 @@ g_min_data = min(g_min_start, 1000)
 g_max_data = max(g_max_end, 1000000)
 step_dataInt <- 1000
 
+data_interval <- g_max_end - g_min_start
+
+# By default 5 % of the data is displayed   
+step_ten_per_cent <- 0.05 * data_interval 
+
 ## IDs for exactly reproduce paper figures
 {
   if (file.exists(file.path(base_dir, "id.txt"))) {
@@ -190,7 +193,8 @@ step_dataInt <- 1000
     }
     else {
       min_data_int <- min(g_min_start, 1000)
-      max_data_int <- g_min_start + 10000
+#       max_data_int <- g_min_start + 10000
+      max_data_int <- g_min_start + step_ten_per_cent
       min_heatmap <- 0
       max_heatmap <- 0.5
       def_avail_plots <- avail_plots[1:2]
@@ -199,7 +203,8 @@ step_dataInt <- 1000
   }
   else {
     min_data_int <- min(g_min_start, 1000)
-    max_data_int <- g_min_start + 10000
+#     max_data_int <- g_min_start + 10000
+    max_data_int <- g_min_start + step_ten_per_cent
     min_heatmap <- 0
     max_heatmap <- 0.5
     def_avail_plots <- avail_plots[1:2]
