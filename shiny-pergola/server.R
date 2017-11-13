@@ -60,10 +60,13 @@ cb_palette <- rep (cb_palette, 10)
 
 ## show legend
 leg_bool <- FALSE
+# size_text_leg <- 12
 size_text_leg <- 14
 
-base_dir <- "/pergola_data"
-
+# base_dir <- "/pergola_data"
+# base_dir <- "/Users/jespinosa/2017_worms_nick/results/shiny_render" #crg
+# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
+base_dir <- "/Users/jespinosa/git/pergola-paper-reproduce/cb1_mice"
 data_dir <- file.path(base_dir, "files")
 
 exp_design_f <- "exp_info.txt"
