@@ -63,10 +63,7 @@ leg_bool <- FALSE
 # size_text_leg <- 12
 size_text_leg <- 14
 
-# base_dir <- "/pergola_data"
-# base_dir <- "/Users/jespinosa/2017_worms_nick/results/shiny_render" #crg
-# base_dir <- "/Users/jespinosa/git/shinyPergola/data/HF_experiment"
-base_dir <- "/Users/jespinosa/git/pergola-paper-reproduce/cb1_mice"
+base_dir <- "/pergola_data"
 data_dir <- file.path(base_dir, "files")
 
 exp_design_f <- "exp_info.txt"
@@ -194,6 +191,41 @@ step_ten_per_cent <- 0.05 * data_interval
       max_heatmap <- 0.3
       def_avail_plots <- avail_plots[2]
     }
+    ###############
+    ## hf data 2018
+    else if (l == "hf_s3") {
+      # all period (9 weeks)
+      min_data_int <- 26953
+      max_data_int <- 5443200+26953
+      min_heatmap <- 0
+      max_heatmap <- 4
+      def_avail_plots <- avail_plots
+    }
+    else if (l == "hf_s4a") {
+      # habituation week
+      min_data_int <- 26953
+      max_data_int <- 604800+26953
+      min_heatmap <- 0
+      max_heatmap <- 0.5
+      def_avail_plots <- avail_plots[1:2]
+    }
+    else if (l == "hf_s4b") {
+      # 3 first weeks
+      min_data_int <- 26953
+      max_data_int <- 1814400+26953 #1841353
+      min_heatmap <- 0
+      max_heatmap <- 0.5
+      def_avail_plots <- avail_plots[1:2]
+    }
+    else if (l == "hab_to_dev") {
+      # transition from hab to dev
+      # day 5 to 9
+      min_data_int <- 26953 + 432000
+      max_data_int <- 26953 + 777600
+      min_heatmap <- 0
+      max_heatmap <- 2
+      def_avail_plots <- avail_plots
+    }
     else {
       min_data_int <- min(g_min_start, 1000)
 #       max_data_int <- g_min_start + 10000
@@ -281,8 +313,8 @@ n_tracks <- length(exp_info$sample)
 
 v_size_font <- switch(as.character(round(n_tracks/10)),
                       "0"=c(20,0.5),
-                      "1"=c(20,0.6),
-                      "2"=c(18,0.6),
+                      "1"=c(14,0.6),
+                      "2"=c(14,0.6),
                       "3"=c(12,0.7),
                       "4"=c(6,1),
                       "5"=c(6,1),
@@ -305,13 +337,8 @@ shinyServer(function(input, output) {
   })
   output$dataInterval_tab <- renderUI({
     sliderInput("dataInterval", label = h4("Data interval:"), 
-#                 min = min(g_min_start, 1000),                 
-#                 max = max(g_max_end, 1000000),
                 min = g_min_data,
                 max = g_max_data,
-                #                           g_min_start + 10000), 
-                #                           3628800), #del # 42 days 6 weeks 
-                #                 value = c(1555200, 2160000), # 
                 value = c(min_data_int, max_data_int),
                 step= step_dataInt) 
   }) 
@@ -326,7 +353,6 @@ shinyServer(function(input, output) {
     checkboxGroupInput( "groups", label = h4("Groups to render:"), 
                         choices = unique(group_lab), 
                         selected=unique(group_lab))
-#                         selected=c("FC_food_sc_wt_dyrk", "FC_food_cd_wt_dyrk", "FC_food_sc_dyrk", "FC_food_cd_dyrk"))
   })
   output$type_gr_plot_tab <- renderUI({
     if (!"plot_gr" %in% input$plots2show) {
@@ -487,33 +513,7 @@ shinyServer(function(input, output) {
                            ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
                            shape = "box", stacking = "dense", fontsize=size_labels, cex=cex_gtrack)
           pt 
-          
-          
-          
-#         plots2show_bool <- avail_plots %in% input$plots2show
-#         list_plots <- c(g_tr)
-#         
-#         if (plots2show_bool[1] == TRUE) {
-#           list_plots <- c(list_plots, unlist(l_gr_annotation_tr_bed[input$groups]))
-#         }
-#         
-#         if (plots2show_bool[2] == TRUE) {
-#           list_plots <- c(list_plots, unlist(list_all_bg[input$groups]))
-#         }
-#         
-#         if (plots2show_bool[3] == TRUE) {
-#           list_plots <- c(list_plots,  groups_dt())
-#         }
-#         
-#         ## phases if the file is present in the folder always show at the end
-#         list_plots <- c(list_plots,  phases_tr) 
-#         
-#         pt <- plotTracks(list_plots,
-#                          from=input$dataInterval[1], to=input$dataInterval[2], 
-#                          ylim=c(input$bedGraphRange[1], input$bedGraphRange[2]),                                                      
-#                          shape = "box", stacking = "dense")  
-#         
-#         pt
+
       }
       
       dev.off()
